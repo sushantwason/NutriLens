@@ -9,7 +9,7 @@ struct LockScreenRectangularView: View {
             HStack(spacing: 4) {
                 Image(systemName: "fork.knife")
                     .font(.system(size: 10))
-                Text("NutriLens")
+                Text("MealSight")
                     .font(.system(size: 11, weight: .semibold))
             }
 

@@ -34,7 +34,7 @@ enum OpenFoodFactsService {
         }
 
         var request = URLRequest(url: url)
-        request.setValue("NutriLens iOS App", forHTTPHeaderField: "User-Agent")
+        request.setValue("MealSight iOS App", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let data: Data

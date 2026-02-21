@@ -75,7 +75,7 @@ struct DashboardView: View {
                 }
                 .padding()
             }
-            .navigationTitle("NutriLens")
+            .navigationTitle("MealSight")
             .background(Color(.systemGroupedBackground))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

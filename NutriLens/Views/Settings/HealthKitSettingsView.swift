@@ -54,7 +54,7 @@ struct HealthKitSettingsView: View {
                 }
 
                 // What's synced
-                Section("What NutriLens Syncs") {
+                Section("What MealSight Syncs") {
                     VStack(alignment: .leading, spacing: 8) {
                         syncRow(icon: "arrow.down.circle", label: "Reads", items: "Body Weight")
                         syncRow(icon: "arrow.up.circle", label: "Writes", items: "Calories, Protein, Carbs, Fat, Water")
@@ -63,7 +63,7 @@ struct HealthKitSettingsView: View {
 
                 // Info
                 Section {
-                    Text("NutriLens automatically syncs your meal nutrition and water intake to Apple Health when you log them. Weight data can be imported from Health into your weight log.")
+                    Text("MealSight automatically syncs your meal nutrition and water intake to Apple Health when you log them. Weight data can be imported from Health into your weight log.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -61,7 +61,7 @@ enum ExportService {
         }
 
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("NutriLens_Export_\(dateStamp()).csv")
+            .appendingPathComponent("MealSight_Export_\(dateStamp()).csv")
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         return url
     }
@@ -75,7 +75,7 @@ enum ExportService {
         let contentWidth = pageWidth - margin * 2
 
         let pdfURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("NutriLens_Export_\(dateStamp()).pdf")
+            .appendingPathComponent("MealSight_Export_\(dateStamp()).pdf")
 
         let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight))
 
@@ -87,7 +87,7 @@ enum ExportService {
             var y = margin
 
             // Title
-            y = drawText("NutriLens Nutrition Report", at: CGPoint(x: margin, y: y),
+            y = drawText("MealSight Nutrition Report", at: CGPoint(x: margin, y: y),
                          font: .boldSystemFont(ofSize: 22), maxWidth: contentWidth)
             y += 4
 

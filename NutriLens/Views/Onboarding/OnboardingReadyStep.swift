@@ -14,7 +14,7 @@ struct OnboardingReadyStep: View {
             Text("Ready to Scan!")
                 .font(.largeTitle.bold())
 
-            Text("Your first scan is just a tap away. Point your camera at a meal, label, or barcode to see NutriLens in action.")
+            Text("Your first scan is just a tap away. Point your camera at a meal, label, or barcode to see MealSight in action.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

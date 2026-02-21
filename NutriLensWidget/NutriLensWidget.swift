@@ -118,7 +118,7 @@ struct NutriLensWidget: Widget {
             NutriLensWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("NutriLens")
+        .configurationDisplayName("MealSight")
         .description("Track your daily nutrition at a glance.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
@@ -134,7 +134,7 @@ struct NutriLensLockScreenWidget: Widget {
             NutriLensLockScreenEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("NutriLens")
+        .configurationDisplayName("MealSight")
         .description("Quick nutrition summary.")
         .supportedFamilies([.accessoryCircular, .accessoryRectangular])
     }

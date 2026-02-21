@@ -18,7 +18,7 @@ struct PaywallView: View {
                 }
                 .padding()
             }
-            .navigationTitle("NutriLens Pro")
+            .navigationTitle("MealSight Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -44,7 +44,7 @@ struct PaywallView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.nutriGreen)
 
-            Text("Unlock NutriLens Pro")
+            Text("Unlock MealSight Pro")
                 .font(.title2.bold())
 
             Text("Choose a plan that fits your tracking needs.")

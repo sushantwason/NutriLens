@@ -147,10 +147,10 @@ struct SettingsView: View {
     }
 
     private var statusLabel: String {
-        if OwnerBypass.isOwnerDevice { return "NutriLens Pro" }
+        if OwnerBypass.isOwnerDevice { return "MealSight Pro" }
         switch subscriptionManager.currentTier {
-        case .unlimited: return "NutriLens Unlimited"
-        case .standard: return "NutriLens Standard"
+        case .unlimited: return "MealSight Unlimited"
+        case .standard: return "MealSight Standard"
         case .none: break
         }
         if trialManager.isTrialActive { return "Free Trial" }

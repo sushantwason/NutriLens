@@ -16,7 +16,7 @@ struct OnboardingWelcomeStep: View {
             Text("Snap. Scan. Track.")
                 .font(.largeTitle.bold())
 
-            Text("Point your camera at any meal, nutrition label, or barcode \u{2014} NutriLens instantly breaks down the calories, protein, carbs, and fat.")
+            Text("Point your camera at any meal, nutrition label, or barcode \u{2014} MealSight instantly breaks down the calories, protein, carbs, and fat.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

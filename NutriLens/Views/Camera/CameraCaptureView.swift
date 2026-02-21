@@ -276,7 +276,7 @@ struct CameraCaptureView: View {
         ContentUnavailableView {
             Label("Camera Access Required", systemImage: "camera.fill")
         } description: {
-            Text("NutriLens needs camera access to photograph your meals. You can also select photos from your library.")
+            Text("MealSight needs camera access to photograph your meals. You can also select photos from your library.")
         } actions: {
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                 Text("Choose from Library")
