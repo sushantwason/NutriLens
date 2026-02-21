@@ -1,0 +1,41 @@
+{
+  "identifier" : "NutriLens Products",
+  "type" : "Configuration",
+  "version" : 3,
+  "subscriptionGroups" : [
+    {
+      "id" : "nutrilens_pro",
+      "localizations" : [
+        {
+          "description" : "NutriLens Pro subscriptions",
+          "displayName" : "NutriLens Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "NutriLens Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "nutrilens_pro_monthly_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited daily meal and label scans",
+              "displayName" : "NutriLens Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.nutrilens.app.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "nutrilens_pro",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ]
+}

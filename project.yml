@@ -1,0 +1,74 @@
+name: NutriLens
+options:
+  bundleIdPrefix: com.nutrilensapp
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: MV279BP25N
+    INFOPLIST_KEY_NSCameraUsageDescription: "NutriLens needs camera access to photograph your meals and nutrition labels for nutritional analysis."
+    INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "NutriLens needs photo library access so you can select food photos for nutritional analysis."
+    INFOPLIST_KEY_NSHealthShareUsageDescription: "NutriLens reads your weight from Apple Health to calculate BMI and track trends."
+    INFOPLIST_KEY_NSHealthUpdateUsageDescription: "NutriLens writes your nutrition and water intake to Apple Health."
+
+targets:
+  NutriLens:
+    type: application
+    platform: iOS
+    sources:
+      - NutriLens
+    entitlements:
+      path: NutriLens/NutriLens.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+        com.apple.security.application-groups:
+          - group.com.nutrilensapp.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nutrilensapp.app
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_CFBundleDisplayName: NutriLens
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: true
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+    dependencies:
+      - target: NutriLensWidgetExtension
+        embed: true
+
+  NutriLensWidgetExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - NutriLensWidget
+      - path: NutriLens/Services/SharedModelContainer.swift
+      - path: NutriLens/Models/Meal.swift
+      - path: NutriLens/Models/FoodItem.swift
+      - path: NutriLens/Models/NutrientInfo.swift
+      - path: NutriLens/Models/DailyGoal.swift
+      - path: NutriLens/Models/WaterEntry.swift
+      - path: NutriLens/Models/NutritionLabel.swift
+      - path: NutriLens/Utilities/Extensions/Double+Extensions.swift
+      - path: NutriLens/Utilities/Extensions/Date+Extensions.swift
+    entitlements:
+      path: NutriLensWidget/NutriLensWidgetExtension.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.nutrilensapp.shared
+    info:
+      path: NutriLensWidget/Info.plist
+      properties:
+        CFBundleDisplayName: NutriLens Widget
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nutrilensapp.app.widget
