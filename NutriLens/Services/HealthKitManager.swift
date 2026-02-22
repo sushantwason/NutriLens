@@ -76,19 +76,41 @@ final class HealthKitManager {
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
-        return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(
-                sampleType: type,
-                predicate: nil,
-                limit: 1,
-                sortDescriptors: [sortDescriptor]
-            ) { _, samples, _ in
-                let weight = (samples?.first as? HKQuantitySample)?
-                    .quantity.doubleValue(for: .gramUnit(with: .kilo))
-                continuation.resume(returning: weight)
+        // Wrap HealthKit query with a timeout to prevent indefinite hangs
+        let weightTask = Task<Double?, Never> {
+            await withCheckedContinuation { continuation in
+                let query = HKSampleQuery(
+                    sampleType: type,
+                    predicate: nil,
+                    limit: 1,
+                    sortDescriptors: [sortDescriptor]
+                ) { _, samples, _ in
+                    let weight = (samples?.first as? HKQuantitySample)?
+                        .quantity.doubleValue(for: .gramUnit(with: .kilo))
+                    continuation.resume(returning: weight)
+                }
+                store.execute(query)
             }
-            store.execute(query)
         }
+
+        // Timeout after 10 seconds to prevent hanging
+        let timeoutTask = Task<Double?, Never> {
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            return nil
+        }
+
+        // Race: whichever finishes first wins
+        let result = await withTaskGroup(of: Double?.self) { group in
+            group.addTask { await weightTask.value }
+            group.addTask { await timeoutTask.value }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
+        }
+
+        weightTask.cancel()
+        timeoutTask.cancel()
+        return result
     }
 
     // MARK: - Private

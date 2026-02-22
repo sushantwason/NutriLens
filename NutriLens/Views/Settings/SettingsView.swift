@@ -34,24 +34,22 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                subscriptionSection
-                appearanceSection
-                dailyGoalsSection
-                profileSection
-                weightSection
-                exportSection
-                healthKitSection
-                aboutSection
-                if OwnerBypass.isOwnerDevice {
-                    developerSection
-                }
+        List {
+            subscriptionSection
+            appearanceSection
+            dailyGoalsSection
+            profileSection
+            weightSection
+            exportSection
+            healthKitSection
+            aboutSection
+            if OwnerBypass.isOwnerDevice {
+                developerSection
             }
-            .navigationTitle("Settings")
-            .sheet(isPresented: $showPaywall) {
-                PaywallView()
-            }
+        }
+        .navigationTitle("Settings")
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 

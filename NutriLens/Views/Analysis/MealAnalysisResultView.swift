@@ -72,17 +72,22 @@ struct MealAnalysisResultView: View {
 
     private var resultView: some View {
         List {
-            // Photo section
+            // Photo (compact)
             if let image = viewModel.capturedImage {
                 Section {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFit()
-                        .frame(maxHeight: 200)
+                        .frame(maxHeight: 120)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .listRowInsets(EdgeInsets())
                         .frame(maxWidth: .infinity)
                 }
+            }
+
+            // Inline macro summary bar (replaces bottom Total Nutrients)
+            Section {
+                macroSummaryBar
             }
 
             // Meal info
@@ -99,9 +104,20 @@ struct MealAnalysisResultView: View {
                     HStack {
                         Text("AI Confidence")
                         Spacer()
-                        Text("\(Int(viewModel.confidenceScore * 100))%")
-                            .foregroundStyle(viewModel.confidenceScore > 0.7 ? .green : viewModel.confidenceScore > 0.4 ? .orange : .red)
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .font(.caption2)
+                            Text("\(Int(viewModel.confidenceScore * 100))%")
+                        }
+                        .foregroundStyle(viewModel.confidenceScore > 0.7 ? .green : viewModel.confidenceScore > 0.4 ? .orange : .red)
                     }
+                }
+            }
+
+            // Dietary alerts
+            if !dietaryAlerts.isEmpty {
+                Section {
+                    DietaryAlertBanner(alerts: dietaryAlerts)
                 }
             }
 
@@ -121,23 +137,6 @@ struct MealAnalysisResultView: View {
                 }
             }
 
-            // Dietary alerts
-            if !dietaryAlerts.isEmpty {
-                Section {
-                    DietaryAlertBanner(alerts: dietaryAlerts)
-                }
-            }
-
-            // Totals
-            Section("Total Nutrients") {
-                nutrientRow("Calories", viewModel.totalNutrients.calories.calorieString, "kcal", .calorieColor)
-                nutrientRow("Protein", viewModel.totalNutrients.proteinGrams.oneDecimalString, "g", .proteinColor)
-                nutrientRow("Carbs", viewModel.totalNutrients.carbsGrams.oneDecimalString, "g", .carbsColor)
-                nutrientRow("Fat", viewModel.totalNutrients.fatGrams.oneDecimalString, "g", .fatColor)
-                nutrientRow("Fiber", viewModel.totalNutrients.fiberGrams.oneDecimalString, "g", .secondary)
-                nutrientRow("Sugar", viewModel.totalNutrients.sugarGrams.oneDecimalString, "g", .secondary)
-            }
-
             // Feedback banner (shown after save)
             if viewModel.showFeedbackBanner {
                 Section {
@@ -150,6 +149,65 @@ struct MealAnalysisResultView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Macro Summary Bar
+
+    private var macroSummaryBar: some View {
+        HStack(spacing: 0) {
+            macroPill(
+                icon: "flame.fill",
+                value: viewModel.totalNutrients.calories.calorieString,
+                unit: "kcal",
+                color: .calorieColor
+            )
+
+            Divider().frame(height: 28)
+
+            macroPill(
+                icon: nil,
+                value: viewModel.totalNutrients.proteinGrams.oneDecimalString,
+                unit: "P",
+                color: .proteinColor
+            )
+
+            Divider().frame(height: 28)
+
+            macroPill(
+                icon: nil,
+                value: viewModel.totalNutrients.carbsGrams.oneDecimalString,
+                unit: "C",
+                color: .carbsColor
+            )
+
+            Divider().frame(height: 28)
+
+            macroPill(
+                icon: nil,
+                value: viewModel.totalNutrients.fatGrams.oneDecimalString,
+                unit: "F",
+                color: .fatColor
+            )
+        }
+        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+    }
+
+    private func macroPill(icon: String?, value: String, unit: String, color: Color) -> some View {
+        HStack(spacing: 3) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundStyle(color)
+            }
+            Text(value)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundStyle(color)
+            Text(unit)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(color.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
     }
 
     // MARK: - Error
@@ -166,20 +224,6 @@ struct MealAnalysisResultView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func nutrientRow(_ name: String, _ value: String, _ unit: String, _ color: Color) -> some View {
-        HStack {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-            Text(name)
-            Spacer()
-            Text("\(value) \(unit)")
-                .fontWeight(.medium)
         }
     }
 }

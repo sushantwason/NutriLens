@@ -11,7 +11,36 @@ enum StreakManager {
         return ratio >= (1.0 - tolerance) && ratio <= (1.0 + tolerance)
     }
 
-    /// Compute whether all goals were met for a given day
+    /// Check goals met using pre-aggregated daily totals (O(1) per day)
+    private static func goalsMetForDay(
+        dayTotals: (cal: Double, protein: Double, carbs: Double, fat: Double),
+        goal: DailyGoal
+    ) -> Bool {
+        guard dayTotals.cal > 0 else { return false }
+        return isOnTarget(dayTotals.cal, target: goal.calorieTarget)
+            && isOnTarget(dayTotals.protein, target: goal.proteinGramsTarget)
+            && isOnTarget(dayTotals.carbs, target: goal.carbsGramsTarget)
+            && isOnTarget(dayTotals.fat, target: goal.fatGramsTarget)
+    }
+
+    /// Pre-group meals by day — O(n) single pass instead of O(n*m) repeated filtering
+    private static func groupMealsByDay(_ meals: [Meal]) -> [Date: (cal: Double, protein: Double, carbs: Double, fat: Double)] {
+        let calendar = Calendar.current
+        var grouped: [Date: (cal: Double, protein: Double, carbs: Double, fat: Double)] = [:]
+        for meal in meals {
+            let dayStart = calendar.startOfDay(for: meal.timestamp)
+            let existing = grouped[dayStart] ?? (0, 0, 0, 0)
+            grouped[dayStart] = (
+                existing.cal + meal.totalCalories,
+                existing.protein + meal.totalProteinGrams,
+                existing.carbs + meal.totalCarbsGrams,
+                existing.fat + meal.totalFatGrams
+            )
+        }
+        return grouped
+    }
+
+    /// Backward-compatible single-day check
     static func goalsMetForDay(
         meals: [Meal],
         goal: DailyGoal,
@@ -35,35 +64,36 @@ enum StreakManager {
             && isOnTarget(totalFat, target: goal.fatGramsTarget)
     }
 
-    /// Compute current streak length (consecutive days where all goals met,
-    /// counting backwards from yesterday). Today is excluded because the day is incomplete.
+    /// Compute current streak length using O(n) pre-grouping
     static func currentStreakLength(meals: [Meal], goal: DailyGoal) -> Int {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
+        let grouped = groupMealsByDay(meals)
         var streak = 0
         var checkDate = calendar.date(byAdding: .day, value: -1, to: today)!
 
-        // Limit lookback to 365 days for performance
         for _ in 0..<365 {
-            guard goalsMetForDay(meals: meals, goal: goal, date: checkDate) else { break }
+            let totals = grouped[checkDate] ?? (0, 0, 0, 0)
+            guard goalsMetForDay(dayTotals: totals, goal: goal) else { break }
             streak += 1
             checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
         }
-
         return streak
     }
 
-    /// Compute longest streak ever
+    /// Compute longest streak ever using O(n) pre-grouping
     static func longestStreak(meals: [Meal], goal: DailyGoal) -> Int {
         guard let earliest = meals.map(\.timestamp).min() else { return 0 }
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
+        let grouped = groupMealsByDay(meals)
         var date = calendar.startOfDay(for: earliest)
         var longest = 0
         var current = 0
 
         while date < today {
-            if goalsMetForDay(meals: meals, goal: goal, date: date) {
+            let totals = grouped[date] ?? (0, 0, 0, 0)
+            if goalsMetForDay(dayTotals: totals, goal: goal) {
                 current += 1
                 longest = max(longest, current)
             } else {
@@ -71,7 +101,6 @@ enum StreakManager {
             }
             date = calendar.date(byAdding: .day, value: 1, to: date)!
         }
-
         return longest
     }
 }

@@ -1,5 +1,24 @@
 import Foundation
 
+// Cached formatters to avoid repeated allocation (DateFormatter is expensive to create)
+private let shortTimeFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.timeStyle = .short
+    return f
+}()
+
+private let mediumDateFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateStyle = .medium
+    return f
+}()
+
+private let shortDayOfWeekFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "EEE"
+    return f
+}()
+
 extension Date {
     var startOfDay: Date {
         Calendar.current.startOfDay(for: self)
@@ -18,15 +37,11 @@ extension Date {
     }
 
     var shortTimeString: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: self)
+        shortTimeFormatter.string(from: self)
     }
 
     var mediumDateString: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: self)
+        mediumDateFormatter.string(from: self)
     }
 
     var sectionHeaderString: String {
@@ -36,8 +51,6 @@ extension Date {
     }
 
     var shortDayOfWeek: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: self)
+        shortDayOfWeekFormatter.string(from: self)
     }
 }

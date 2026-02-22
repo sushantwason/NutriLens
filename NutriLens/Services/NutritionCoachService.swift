@@ -40,6 +40,7 @@ final class NutritionCoachService {
         guard !isLoading else { return }
         isLoading = true
         error = nil
+        defer { isLoading = false }
 
         let hour = Calendar.current.component(.hour, from: Date())
         let timeOfDay: String
@@ -73,7 +74,7 @@ final class NutritionCoachService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
-        request.timeoutInterval = 30
+        request.timeoutInterval = 15
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -82,7 +83,6 @@ final class NutritionCoachService {
 
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                isLoading = false
                 error = "Failed to get coach response"
                 return
             }
@@ -92,7 +92,6 @@ final class NutritionCoachService {
                   let content = json["content"] as? [[String: Any]],
                   let firstBlock = content.first,
                   let text = firstBlock["text"] as? String else {
-                isLoading = false
                 error = "Unexpected response format"
                 return
             }
@@ -105,7 +104,6 @@ final class NutritionCoachService {
 
             guard let jsonData = cleaned.data(using: .utf8),
                   let coachResponse = try? JSONDecoder().decode(CoachResponse.self, from: jsonData) else {
-                isLoading = false
                 error = "Failed to parse coach response"
                 return
             }
@@ -123,8 +121,6 @@ final class NutritionCoachService {
         } catch {
             self.error = error.localizedDescription
         }
-
-        isLoading = false
     }
 
     /// Generate a simple hash of progress for change detection
