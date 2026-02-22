@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-@Observable
+@MainActor @Observable
 final class RecipeAnalysisViewModel {
     var analysisState: AnalysisState = .idle
     var foodItems: [EditableFoodItem] = []

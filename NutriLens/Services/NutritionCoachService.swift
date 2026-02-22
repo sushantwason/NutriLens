@@ -13,7 +13,7 @@ private struct CoachResponse: Codable {
     let tip: String
 }
 
-@Observable
+@MainActor @Observable
 final class NutritionCoachService {
     var latestInsight: CoachInsight?
     var isLoading = false

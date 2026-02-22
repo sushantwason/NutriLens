@@ -1,7 +1,7 @@
 import AVFoundation
 import UIKit
 
-@Observable
+@MainActor @Observable
 final class CameraService: NSObject {
     let session = AVCaptureSession()
     var isAuthorized = false
@@ -74,7 +74,11 @@ final class CameraService: NSObject {
     }
 
     func capturePhoto() async -> UIImage? {
-        await withCheckedContinuation { continuation in
+        // Cancel any pending capture to prevent continuation leak
+        continuation?.resume(returning: nil)
+        continuation = nil
+
+        return await withCheckedContinuation { continuation in
             self.continuation = continuation
             let settings = AVCapturePhotoSettings()
             photoOutput.capturePhoto(with: settings, delegate: self)
@@ -82,7 +86,11 @@ final class CameraService: NSObject {
     }
 
     func startBarcodeScanning() async -> String? {
+        // Cancel any pending barcode scan to prevent continuation leak
+        barcodeContinuation?.resume(returning: nil)
+        barcodeContinuation = nil
         scannedBarcode = nil
+
         return await withCheckedContinuation { continuation in
             self.barcodeContinuation = continuation
         }

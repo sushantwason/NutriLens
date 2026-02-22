@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-@Observable
+@MainActor @Observable
 final class LabelScanViewModel {
     var analysisState: AnalysisState = .idle
     var productName: String = ""

@@ -1,7 +1,7 @@
 import Foundation
 import HealthKit
 
-@Observable
+@MainActor @Observable
 final class HealthKitManager {
     private(set) var isAuthorized = false
     private(set) var isAvailable = false

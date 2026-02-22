@@ -11,7 +11,9 @@ enum SharedModelContainer {
             FoodItem.self,
             NutritionLabel.self,
             DailyGoal.self,
-            WaterEntry.self
+            UserProfile.self,
+            WaterEntry.self,
+            WeightEntry.self
         ])
 
         let config: ModelConfiguration

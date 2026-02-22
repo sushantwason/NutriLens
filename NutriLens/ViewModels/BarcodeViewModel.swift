@@ -9,7 +9,7 @@ enum BarcodeState: Equatable {
     case error(String)
 }
 
-@Observable
+@MainActor @Observable
 final class BarcodeViewModel {
     var state: BarcodeState = .scanning
     var scannedBarcode: String = ""

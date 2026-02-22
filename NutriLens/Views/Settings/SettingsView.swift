@@ -12,25 +12,15 @@ struct SettingsView: View {
 
     @AppStorage("nutrilens.appearance.mode") private var appearanceMode: String = AppearanceMode.system.rawValue
     @State private var showPaywall = false
+    @State private var localGoal: DailyGoal?
+    @State private var localProfile: UserProfile?
 
     private var currentGoal: DailyGoal {
-        if let goal = activeGoals.first {
-            return goal
-        }
-        let newGoal = DailyGoal()
-        modelContext.insert(newGoal)
-        try? modelContext.save()
-        return newGoal
+        localGoal ?? activeGoals.first ?? DailyGoal()
     }
 
     private var currentProfile: UserProfile {
-        if let profile = profiles.first {
-            return profile
-        }
-        let newProfile = UserProfile()
-        modelContext.insert(newProfile)
-        try? modelContext.save()
-        return newProfile
+        localProfile ?? profiles.first ?? UserProfile()
     }
 
     var body: some View {
@@ -48,6 +38,21 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .task {
+            // Create default goal/profile once, outside the render cycle
+            if activeGoals.isEmpty && localGoal == nil {
+                let newGoal = DailyGoal()
+                modelContext.insert(newGoal)
+                try? modelContext.save()
+                localGoal = newGoal
+            }
+            if profiles.isEmpty && localProfile == nil {
+                let newProfile = UserProfile()
+                modelContext.insert(newProfile)
+                try? modelContext.save()
+                localProfile = newProfile
+            }
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
@@ -184,15 +189,19 @@ struct SettingsView: View {
 
     private var dailyGoalsSection: some View {
         Section("Daily Goals") {
-            NavigationLink {
-                GoalEditorView(goal: currentGoal)
-            } label: {
-                VStack(alignment: .leading, spacing: 8) {
-                    goalRow("Calories", value: currentGoal.calorieTarget, unit: "kcal", color: .calorieColor)
-                    goalRow("Protein", value: currentGoal.proteinGramsTarget, unit: "g", color: .proteinColor)
-                    goalRow("Carbs", value: currentGoal.carbsGramsTarget, unit: "g", color: .carbsColor)
-                    goalRow("Fat", value: currentGoal.fatGramsTarget, unit: "g", color: .fatColor)
+            if let goal = activeGoals.first ?? localGoal {
+                NavigationLink {
+                    GoalEditorView(goal: goal)
+                } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        goalRow("Calories", value: goal.calorieTarget, unit: "kcal", color: .calorieColor)
+                        goalRow("Protein", value: goal.proteinGramsTarget, unit: "g", color: .proteinColor)
+                        goalRow("Carbs", value: goal.carbsGramsTarget, unit: "g", color: .carbsColor)
+                        goalRow("Fat", value: goal.fatGramsTarget, unit: "g", color: .fatColor)
+                    }
                 }
+            } else {
+                ProgressView()
             }
         }
     }
@@ -213,18 +222,20 @@ struct SettingsView: View {
 
     private var profileSection: some View {
         Section("Profile") {
-            NavigationLink {
-                ProfileEditorView(profile: currentProfile)
-            } label: {
-                HStack {
-                    Label("Body Profile", systemImage: "person.fill")
-                    Spacer()
-                    if let profile = profiles.first {
+            if let profile = profiles.first ?? localProfile {
+                NavigationLink {
+                    ProfileEditorView(profile: profile)
+                } label: {
+                    HStack {
+                        Label("Body Profile", systemImage: "person.fill")
+                        Spacer()
                         Text("BMI \(profile.bmi, specifier: "%.1f")")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
+            } else {
+                ProgressView()
             }
         }
     }

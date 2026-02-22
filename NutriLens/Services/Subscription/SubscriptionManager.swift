@@ -7,7 +7,7 @@ enum SubscriptionTier: String {
     case unlimited  // $9.99/mo, unlimited scans
 }
 
-@Observable
+@MainActor @Observable
 final class SubscriptionManager {
     // MARK: - State
 
@@ -36,7 +36,7 @@ final class SubscriptionManager {
 
     // MARK: - Private
 
-    private var transactionListener: Task<Void, Never>?
+    private nonisolated(unsafe) var transactionListener: Task<Void, Never>?
 
     init() {
         // Owner always gets unlimited
@@ -52,7 +52,7 @@ final class SubscriptionManager {
         Task { await updateSubscriptionStatus() }
     }
 
-    deinit {
+    nonisolated deinit {
         transactionListener?.cancel()
     }
 
@@ -180,7 +180,7 @@ final class SubscriptionManager {
 
     // MARK: - Verification
 
-    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+    private nonisolated func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified(_, let error):
             throw error

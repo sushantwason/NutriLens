@@ -54,7 +54,7 @@ struct EditableFoodItem: Identifiable {
     }
 }
 
-@Observable
+@MainActor @Observable
 final class MealAnalysisViewModel {
     var analysisState: AnalysisState = .idle
     var foodItems: [EditableFoodItem] = []
