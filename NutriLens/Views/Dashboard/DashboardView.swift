@@ -55,9 +55,6 @@ struct DashboardView: View {
                     // Today's meals
                     todayMealsSection
 
-                    // Water tracking
-                    WaterProgressCard()
-
                     // AI Coach
                     CoachInsightCard(
                         insight: coachService.latestInsight,
