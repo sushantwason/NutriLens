@@ -55,6 +55,22 @@ struct DashboardView: View {
                     // Water tracking
                     WaterProgressCard()
 
+                    // AI Coach
+                    CoachInsightCard(
+                        insight: coachService.latestInsight,
+                        isLoading: coachService.isLoading,
+                        onRefresh: { fetchCoachInsight() }
+                    )
+
+                    // Micronutrients teaser
+                    micronutrientsCard
+
+                    // Smart Insights link
+                    smartInsightsLink
+
+                    // Weekly report
+                    weeklyReportLink
+
                     // Bottom spacer
                     Color.clear.frame(height: 24)
                 }
@@ -68,6 +84,7 @@ struct DashboardView: View {
             }
             .task {
                 recalculateStreaks()
+                fetchCoachInsight()
             }
             .onChange(of: allMeals.count) { _, _ in
                 recalculateStreaks()
@@ -315,6 +332,110 @@ struct DashboardView: View {
         }
     }
 
+    // MARK: - Coach
+
+    private func fetchCoachInsight() {
+        let hash = coachService.progressHash(totals: todayTotals)
+        guard coachService.shouldRefresh(currentHash: hash) else { return }
+        Task {
+            await coachService.fetchInsight(
+                todayTotals: todayTotals,
+                goal: goal,
+                streak: cachedCurrentStreak,
+                restrictions: profiles.first?.dietaryRestrictions ?? []
+            )
+        }
+    }
+
+    // MARK: - Micronutrients Card
+
+    private var micronutrientsCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "leaf.fill")
+                .font(.title3)
+                .foregroundStyle(.nutriGreen)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Micronutrients")
+                    .font(.subheadline.weight(.semibold))
+                Text("Scan a meal to see micronutrient estimates")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    // MARK: - Smart Insights Link
+
+    private var smartInsightsLink: some View {
+        NavigationLink {
+            SmartInsightsView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "brain.head.profile.fill")
+                    .font(.body)
+                    .foregroundStyle(.nutriPurple)
+                    .frame(width: 36, height: 36)
+                    .background(.nutriPurple.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Smart Insights")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("View patterns, alerts & suggestions")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Weekly Report Link
+
+    private var weeklyReportLink: some View {
+        NavigationLink {
+            WeeklyReportView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.bar.doc.horizontal.fill")
+                    .font(.body)
+                    .foregroundStyle(.nutriGreen)
+                    .frame(width: 36, height: 36)
+                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Weekly Report")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("View your nutrition trends")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
     private func deleteMeal(_ meal: Meal) {
         withAnimation {
             HapticService.mealDeleted()
@@ -330,25 +451,21 @@ struct MealRowCard: View {
     var onDelete: (() -> Void)?
 
     @State private var offset: CGFloat = 0
-    @State private var showDeleteButton = false
-    private let deleteThreshold: CGFloat = -70
+    private let deleteWidth: CGFloat = 70
 
     var body: some View {
         ZStack(alignment: .trailing) {
-            // Delete button behind
-            if showDeleteButton {
-                Button(role: .destructive) {
-                    onDelete?()
-                } label: {
-                    Image(systemName: "trash.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .frame(width: 60)
-                .frame(maxHeight: .infinity)
-                .background(.red, in: RoundedRectangle(cornerRadius: 14))
+            // Delete button (always present, revealed by swipe)
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Image(systemName: "trash.fill")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: deleteWidth)
+                    .frame(maxHeight: .infinity)
             }
+            .background(.red, in: RoundedRectangle(cornerRadius: 14))
 
             // Main row content
             NavigationLink(destination: MealDetailView(meal: meal)) {
@@ -389,29 +506,29 @@ struct MealRowCard: View {
             }
             .buttonStyle(.plain)
             .offset(x: offset)
-            .gesture(
-                DragGesture(minimumDistance: 20)
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 30, coordinateSpace: .local)
                     .onChanged { value in
-                        let translation = value.translation.width
-                        // Only allow left swipe
-                        if translation < 0 {
-                            offset = translation
-                            showDeleteButton = true
+                        // Only respond to horizontal swipes
+                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                        if value.translation.width < 0 {
+                            offset = max(value.translation.width, -deleteWidth)
+                        } else if offset < 0 {
+                            offset = min(0, offset + value.translation.width)
                         }
                     }
                     .onEnded { value in
-                        withAnimation(.spring(response: 0.3)) {
-                            if offset < deleteThreshold {
-                                offset = deleteThreshold
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            if offset < -deleteWidth / 2 {
+                                offset = -deleteWidth
                             } else {
                                 offset = 0
-                                showDeleteButton = false
                             }
                         }
                     }
             )
         }
-        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private func macroLabel(_ letter: String, _ value: Double, _ color: Color) -> some View {

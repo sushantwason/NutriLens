@@ -6,7 +6,6 @@ struct FeedbackView: View {
 
     @State private var selectedCategory: FeedbackCategory = .general
     @State private var message: String = ""
-    @State private var rating: Int = 0
     @State private var submitted = false
     @State private var showMailError = false
 
@@ -61,25 +60,6 @@ struct FeedbackView: View {
 
     private var formView: some View {
         Form {
-            Section("How are you enjoying MealSight?") {
-                HStack(spacing: 12) {
-                    ForEach(1...5, id: \.self) { star in
-                        Button {
-                            withAnimation(.spring(response: 0.3)) {
-                                rating = star
-                            }
-                        } label: {
-                            Image(systemName: star <= rating ? "star.fill" : "star")
-                                .font(.title2)
-                                .foregroundStyle(star <= rating ? Color.nutriOrange : Color.gray.opacity(0.3))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-            }
-
             Section("What's this about?") {
                 FlowLayout(spacing: 8) {
                     ForEach(FeedbackCategory.allCases) { category in
@@ -167,7 +147,6 @@ struct FeedbackView: View {
     private func submitFeedback() {
         let subject = "[\(selectedCategory.chipLabel)] MealSight Feedback"
         let body = """
-        Rating: \(rating > 0 ? "\(rating)/5 stars" : "Not rated")
         Category: \(selectedCategory.chipLabel)
 
         \(message)

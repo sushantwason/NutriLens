@@ -30,7 +30,6 @@ struct SettingsView: View {
             appearanceSection
             dailyGoalsSection
             profileSection
-            weightSection
             exportSection
             achievementsSection
             referralsSection

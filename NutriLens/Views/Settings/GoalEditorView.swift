@@ -3,13 +3,16 @@ import SwiftData
 
 struct GoalEditorView: View {
     @Bindable var goal: DailyGoal
-    @Query private var profiles: [UserProfile]
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
+    @State private var profile: UserProfile?
+    @State private var didLoad = false
 
     var body: some View {
         List {
             // MARK: - Recalculate from Profile
-            if let profile = profiles.first {
+            if let profile {
                 Section {
                     Button {
                         let rec = TDEECalculator.recommendGoals(profile: profile)
@@ -91,6 +94,12 @@ struct GoalEditorView: View {
         }
         .navigationTitle("Edit Goals")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard !didLoad else { return }
+            didLoad = true
+            let descriptor = FetchDescriptor<UserProfile>()
+            profile = try? modelContext.fetch(descriptor).first
+        }
     }
 
     private func sliderRow(
