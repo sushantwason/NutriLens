@@ -9,16 +9,10 @@ struct AchievementsView: View {
 
     private var goal: DailyGoal? { activeGoals.first }
 
-    private var totalMealsLogged: Int { allMeals.count }
-
-    private var uniqueDaysLogged: Int {
-        Set(allMeals.map { Calendar.current.startOfDay(for: $0.timestamp) }).count
-    }
-
-    private var currentStreak: Int {
-        guard let goal else { return 0 }
-        return StreakManager.currentStreakLength(meals: Array(allMeals), goal: goal)
-    }
+    // Cache expensive computations with @State
+    @State private var cachedTotalMeals: Int = 0
+    @State private var cachedUniqueDays: Int = 0
+    @State private var cachedCurrentStreak: Int = 0
 
     var body: some View {
         List {
@@ -27,31 +21,31 @@ struct AchievementsView: View {
                     icon: "fork.knife.circle.fill",
                     title: "First Meal",
                     description: "Log your first meal",
-                    achieved: totalMealsLogged >= 1,
+                    achieved: cachedTotalMeals >= 1,
                     color: .nutriGreen
                 )
                 milestoneRow(
                     icon: "10.circle.fill",
                     title: "Getting Started",
                     description: "Log 10 meals",
-                    achieved: totalMealsLogged >= 10,
-                    progress: "\(min(totalMealsLogged, 10))/10",
+                    achieved: cachedTotalMeals >= 10,
+                    progress: "\(min(cachedTotalMeals, 10))/10",
                     color: .nutriBlue
                 )
                 milestoneRow(
                     icon: "50.circle.fill",
                     title: "Dedicated Logger",
                     description: "Log 50 meals",
-                    achieved: totalMealsLogged >= 50,
-                    progress: "\(min(totalMealsLogged, 50))/50",
+                    achieved: cachedTotalMeals >= 50,
+                    progress: "\(min(cachedTotalMeals, 50))/50",
                     color: .nutriPurple
                 )
                 milestoneRow(
                     icon: "star.circle.fill",
                     title: "Century Club",
                     description: "Log 100 meals",
-                    achieved: totalMealsLogged >= 100,
-                    progress: "\(min(totalMealsLogged, 100))/100",
+                    achieved: cachedTotalMeals >= 100,
+                    progress: "\(min(cachedTotalMeals, 100))/100",
                     color: .nutriOrange
                 )
             }
@@ -61,34 +55,45 @@ struct AchievementsView: View {
                     icon: "flame.fill",
                     title: "On Fire",
                     description: "Reach a 3-day streak",
-                    achieved: currentStreak >= 3,
+                    achieved: cachedCurrentStreak >= 3,
                     color: .nutriOrange
                 )
                 badgeRow(
                     icon: "flame.circle.fill",
                     title: "Streak Master",
                     description: "Reach a 7-day streak",
-                    achieved: currentStreak >= 7,
+                    achieved: cachedCurrentStreak >= 7,
                     color: .nutriRed
                 )
                 badgeRow(
                     icon: "calendar.circle.fill",
                     title: "Week Warrior",
                     description: "Log meals on 7 different days",
-                    achieved: uniqueDaysLogged >= 7,
+                    achieved: cachedUniqueDays >= 7,
                     color: .nutriGreen
                 )
                 badgeRow(
                     icon: "calendar.badge.checkmark",
                     title: "Monthly Champion",
                     description: "Log meals on 30 different days",
-                    achieved: uniqueDaysLogged >= 30,
+                    achieved: cachedUniqueDays >= 30,
                     color: .nutriBlue
                 )
             }
         }
         .navigationTitle("Achievements")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            recalculate()
+        }
+    }
+
+    private func recalculate() {
+        cachedTotalMeals = allMeals.count
+        cachedUniqueDays = Set(allMeals.map { Calendar.current.startOfDay(for: $0.timestamp) }).count
+        if let goal {
+            cachedCurrentStreak = StreakManager.currentStreakLength(meals: Array(allMeals), goal: goal)
+        }
     }
 
     private func milestoneRow(icon: String, title: String, description: String, achieved: Bool, progress: String? = nil, color: Color) -> some View {

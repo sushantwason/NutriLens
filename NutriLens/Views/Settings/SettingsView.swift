@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var showPaywall = false
     @State private var localGoal: DailyGoal?
     @State private var localProfile: UserProfile?
+    @State private var didSetupDefaults = false
 
     private var currentGoal: DailyGoal {
         localGoal ?? activeGoals.first ?? DailyGoal()
@@ -43,6 +44,8 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .task {
+            guard !didSetupDefaults else { return }
+            didSetupDefaults = true
             // Create default goal/profile once, outside the render cycle
             if activeGoals.isEmpty && localGoal == nil {
                 let newGoal = DailyGoal()
@@ -321,7 +324,12 @@ struct SettingsView: View {
         let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true)
+            // Find the topmost presented controller to avoid presentation conflicts
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            topVC.present(activityVC, animated: true)
         }
     }
 
