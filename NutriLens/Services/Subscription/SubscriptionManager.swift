@@ -3,8 +3,7 @@ import SwiftUI
 
 enum SubscriptionTier: String {
     case none
-    case standard   // $4.99/mo, 100 scans
-    case unlimited  // $9.99/mo, unlimited scans
+    case pro   // $4.99/mo or $39.99/yr, unlimited scans
 }
 
 @MainActor @Observable
@@ -17,25 +16,28 @@ final class SubscriptionManager {
     var isLoading: Bool = false
     var subscriptionExpirationDate: Date?
 
-    /// Backward-compatible: true for any active subscription
+    /// True for any active subscription
     var isProUser: Bool {
-        currentTier != .none
+        currentTier == .pro
     }
 
     // MARK: - Product IDs
 
-    static let standardMonthlyProductID = "com.nutrilensapp.app.standard.monthly"
-    static let unlimitedMonthlyProductID = "com.nutrilensapp.app.unlimited.monthly"
-    static let standardAnnualProductID = "com.nutrilensapp.app.standard.annual"
-    static let unlimitedAnnualProductID = "com.nutrilensapp.app.unlimited.annual"
+    static let proMonthlyProductID = "com.nutrilensapp.app.pro.monthly"
+    static let proAnnualProductID = "com.nutrilensapp.app.pro.annual"
 
-    // Legacy product ID for migration
+    // Legacy product IDs for migration
     static let legacyProMonthlyProductID = "com.nutrilens.app.pro.monthly"
+    static let legacyStandardMonthlyProductID = "com.nutrilensapp.app.standard.monthly"
+    static let legacyUnlimitedMonthlyProductID = "com.nutrilensapp.app.unlimited.monthly"
+    static let legacyStandardAnnualProductID = "com.nutrilensapp.app.standard.annual"
+    static let legacyUnlimitedAnnualProductID = "com.nutrilensapp.app.unlimited.annual"
 
     private static var allProductIDs: Set<String> {
-        [standardMonthlyProductID, unlimitedMonthlyProductID,
-         standardAnnualProductID, unlimitedAnnualProductID,
-         legacyProMonthlyProductID]
+        [proMonthlyProductID, proAnnualProductID,
+         legacyProMonthlyProductID, legacyStandardMonthlyProductID,
+         legacyUnlimitedMonthlyProductID, legacyStandardAnnualProductID,
+         legacyUnlimitedAnnualProductID]
     }
 
     // MARK: - Private
@@ -43,9 +45,9 @@ final class SubscriptionManager {
     private nonisolated(unsafe) var transactionListener: Task<Void, Never>?
 
     init() {
-        // Owner always gets unlimited
+        // Owner always gets pro
         if OwnerBypass.isOwnerDevice {
-            currentTier = .unlimited
+            currentTier = .pro
             return
         }
 
@@ -66,8 +68,10 @@ final class SubscriptionManager {
         isLoading = true
         do {
             let storeProducts = try await Product.products(for: Self.allProductIDs)
-            // Sort: standard first, then unlimited
-            products = storeProducts.sorted { $0.price < $1.price }
+            // Only show current products (not legacy), sorted by price
+            products = storeProducts
+                .filter { $0.id == Self.proMonthlyProductID || $0.id == Self.proAnnualProductID }
+                .sorted { $0.price < $1.price }
         } catch {
             purchaseError = "Failed to load products: \(error.localizedDescription)"
         }
@@ -76,20 +80,7 @@ final class SubscriptionManager {
 
     // MARK: - Purchase
 
-    func purchaseStandard() async {
-        await purchase(productID: Self.standardMonthlyProductID)
-    }
-
-    func purchaseUnlimited() async {
-        await purchase(productID: Self.unlimitedMonthlyProductID)
-    }
-
-    private func purchase(productID: String) async {
-        guard let product = products.first(where: { $0.id == productID }) else {
-            purchaseError = "Product not available"
-            return
-        }
-
+    func purchase(product: Product) async {
         isLoading = true
         purchaseError = nil
 
@@ -126,7 +117,7 @@ final class SubscriptionManager {
 
     func updateSubscriptionStatus() async {
         if OwnerBypass.isOwnerDevice {
-            currentTier = .unlimited
+            currentTier = .pro
             return
         }
 
@@ -136,18 +127,12 @@ final class SubscriptionManager {
         for await result in Transaction.currentEntitlements {
             if let transaction = try? checkVerified(result) {
                 switch transaction.productID {
-                case Self.unlimitedMonthlyProductID, Self.unlimitedAnnualProductID:
-                    detectedTier = .unlimited
-                    latestExpiration = transaction.expirationDate
-                case Self.standardMonthlyProductID, Self.standardAnnualProductID:
-                    // Only set standard if we haven't found unlimited
-                    if detectedTier != .unlimited {
-                        detectedTier = .standard
-                        latestExpiration = transaction.expirationDate
-                    }
-                case Self.legacyProMonthlyProductID:
-                    // Legacy pro users get unlimited
-                    detectedTier = .unlimited
+                case Self.proMonthlyProductID, Self.proAnnualProductID,
+                     Self.legacyProMonthlyProductID,
+                     Self.legacyStandardMonthlyProductID, Self.legacyUnlimitedMonthlyProductID,
+                     Self.legacyStandardAnnualProductID, Self.legacyUnlimitedAnnualProductID:
+                    // All legacy tiers migrate to pro
+                    detectedTier = .pro
                     latestExpiration = transaction.expirationDate
                 default:
                     break
@@ -161,24 +146,12 @@ final class SubscriptionManager {
 
     // MARK: - Helpers
 
-    var standardProduct: Product? {
-        products.first { $0.id == Self.standardMonthlyProductID }
+    var monthlyProduct: Product? {
+        products.first { $0.id == Self.proMonthlyProductID }
     }
 
-    var unlimitedProduct: Product? {
-        products.first { $0.id == Self.unlimitedMonthlyProductID }
-    }
-
-    var standardAnnualProduct: Product? {
-        products.first { $0.id == Self.standardAnnualProductID }
-    }
-
-    var unlimitedAnnualProduct: Product? {
-        products.first { $0.id == Self.unlimitedAnnualProductID }
-    }
-
-    func purchase(product: Product) async {
-        await purchase(productID: product.id)
+    var annualProduct: Product? {
+        products.first { $0.id == Self.proAnnualProductID }
     }
 
     // MARK: - Transaction Listener

@@ -5,16 +5,20 @@ struct PaywallView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedPlan: SubscriptionTier = .unlimited
     @State private var isAnnual: Bool = true
+
+    private var selectedProduct: Product? {
+        isAnnual ? subscriptionManager.annualProduct : subscriptionManager.monthlyProduct
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     headerSection
+                    featuresSection
                     billingToggle
-                    planCards
+                    priceCard
                     subscribeButton
                     restoreAndError
                     footerSection
@@ -50,12 +54,38 @@ struct PaywallView: View {
             Text("Unlock MealSight Pro")
                 .font(.title2.bold())
 
-            Text("Choose a plan that fits your tracking needs.")
+            Text("Unlimited AI-powered nutrition scanning.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 20)
+    }
+
+    // MARK: - Features
+
+    private var featuresSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            featureRow("Unlimited meal scans", icon: "camera.fill")
+            featureRow("Nutrition labels & barcodes", icon: "doc.text.fill")
+            featureRow("Recipe analysis", icon: "book.fill")
+            featureRow("AI Coach meal suggestions", icon: "brain.head.profile.fill")
+            featureRow("Smart Insights & trends", icon: "chart.line.uptrend.xyaxis")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func featureRow(_ text: String, icon: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(.nutriGreen)
+                .frame(width: 24)
+            Text(text)
+                .font(.subheadline)
+        }
     }
 
     // MARK: - Billing Toggle
@@ -65,7 +95,7 @@ struct PaywallView: View {
             billingOption(label: "Monthly", selected: !isAnnual) {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = false }
             }
-            billingOption(label: "Annual", selected: isAnnual, badge: "Save 25%") {
+            billingOption(label: "Annual", selected: isAnnual, badge: "Save 33%") {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = true }
             }
         }
@@ -95,166 +125,51 @@ struct PaywallView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Plan Cards
+    // MARK: - Price Card
 
-    private var planCards: some View {
-        HStack(spacing: 12) {
-            if isAnnual {
-                planCard(
-                    tier: .standard,
-                    name: "Standard",
-                    price: subscriptionManager.standardAnnualProduct?.displayPrice ?? "$44.99",
-                    period: "/year",
-                    monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.standardAnnualProduct),
-                    features: [
-                        "100 scans per month",
-                        "Meal photos & labels",
-                        "Full nutrition tracking"
-                    ],
-                    tagline: "Perfect for casual trackers",
-                    badge: nil
-                )
+    private var priceCard: some View {
+        VStack(spacing: 8) {
+            if let product = selectedProduct {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(product.displayPrice)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                    Text(isAnnual ? "/year" : "/month")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
-                planCard(
-                    tier: .unlimited,
-                    name: "Unlimited",
-                    price: subscriptionManager.unlimitedAnnualProduct?.displayPrice ?? "$89.99",
-                    period: "/year",
-                    monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.unlimitedAnnualProduct),
-                    features: [
-                        "Unlimited scans",
-                        "Meal photos & labels",
-                        "Full nutrition tracking"
-                    ],
-                    tagline: "Best for daily trackers",
-                    badge: "BEST VALUE"
-                )
+                if isAnnual {
+                    if let equivalent = monthlyEquivalent(for: product) {
+                        Text("Just \(equivalent)/month")
+                            .font(.subheadline)
+                            .foregroundStyle(.nutriGreen)
+                    }
+                }
             } else {
-                planCard(
-                    tier: .standard,
-                    name: "Standard",
-                    price: subscriptionManager.standardProduct?.displayPrice ?? "$4.99",
-                    period: "/month",
-                    monthlyEquivalent: nil,
-                    features: [
-                        "100 scans per month",
-                        "Meal photos & labels",
-                        "Full nutrition tracking"
-                    ],
-                    tagline: "Perfect for casual trackers",
-                    badge: nil
-                )
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(isAnnual ? "$39.99" : "$4.99")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                    Text(isAnnual ? "/year" : "/month")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
-                planCard(
-                    tier: .unlimited,
-                    name: "Unlimited",
-                    price: subscriptionManager.unlimitedProduct?.displayPrice ?? "$9.99",
-                    period: "/month",
-                    monthlyEquivalent: nil,
-                    features: [
-                        "Unlimited scans",
-                        "Meal photos & labels",
-                        "Full nutrition tracking"
-                    ],
-                    tagline: "Best for daily trackers",
-                    badge: "BEST VALUE"
-                )
+                if isAnnual {
+                    Text("Just $3.33/month")
+                        .font(.subheadline)
+                        .foregroundStyle(.nutriGreen)
+                }
             }
         }
+        .padding(.vertical, 8)
     }
 
-    private func monthlyEquivalent(for product: Product?) -> String? {
-        guard let product else { return nil }
+    private func monthlyEquivalent(for product: Product) -> String? {
         let monthly = NSDecimalNumber(decimal: product.price / 12)
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.locale = product.priceFormatStyle.locale
-        guard let formatted = formatter.string(from: monthly) else { return nil }
-        return "\(formatted)/mo"
-    }
-
-    private func planCard(
-        tier: SubscriptionTier,
-        name: String,
-        price: String,
-        period: String,
-        monthlyEquivalent: String?,
-        features: [String],
-        tagline: String,
-        badge: String?
-    ) -> some View {
-        let isSelected = selectedPlan == tier
-
-        return Button {
-            selectedPlan = tier
-            HapticService.buttonTap()
-        } label: {
-            VStack(spacing: 12) {
-                // Badge
-                if let badge {
-                    Text(badge)
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(.nutriGreen, in: Capsule())
-                } else {
-                    // Invisible spacer to keep cards aligned
-                    Text(" ")
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .opacity(0)
-                }
-
-                Text(name)
-                    .font(.headline)
-
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(price)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                    Text(period)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let monthlyEquivalent {
-                    Text(monthlyEquivalent)
-                        .font(.caption2)
-                        .foregroundStyle(.nutriGreen)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(features, id: \.self) { feature in
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark")
-                                .font(.caption2.weight(.bold))
-                                .foregroundStyle(.nutriGreen)
-                            Text(feature)
-                                .font(.caption)
-                        }
-                    }
-                }
-
-                Spacer(minLength: 0)
-
-                Text(tagline)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity)
-            .background {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(.regularMaterial)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(isSelected ? Color.nutriGreen : Color.clear, lineWidth: 2)
-                    }
-            }
-        }
-        .buttonStyle(.plain)
+        return formatter.string(from: monthly)
     }
 
     // MARK: - Subscribe Button
@@ -262,20 +177,7 @@ struct PaywallView: View {
     private var subscribeButton: some View {
         Button {
             Task {
-                let productID: String
-                switch (selectedPlan, isAnnual) {
-                case (.standard, false):
-                    productID = SubscriptionManager.standardMonthlyProductID
-                case (.standard, true):
-                    productID = SubscriptionManager.standardAnnualProductID
-                case (.unlimited, false):
-                    productID = SubscriptionManager.unlimitedMonthlyProductID
-                case (.unlimited, true):
-                    productID = SubscriptionManager.unlimitedAnnualProductID
-                case (.none, _):
-                    return
-                }
-                if let product = subscriptionManager.products.first(where: { $0.id == productID }) {
+                if let product = selectedProduct {
                     await subscriptionManager.purchase(product: product)
                 }
             }
@@ -294,7 +196,7 @@ struct PaywallView: View {
             .padding(.vertical, 14)
             .background(.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
         }
-        .disabled(subscriptionManager.isLoading || subscriptionManager.products.isEmpty)
+        .disabled(subscriptionManager.isLoading || selectedProduct == nil)
     }
 
     // MARK: - Restore & Error

@@ -36,7 +36,6 @@ struct CameraCaptureView: View {
     @State private var recipeAnalysisVM = RecipeAnalysisViewModel()
 
     @State private var isBarcodeScanning = false
-    @State private var showScanLimitAlert = false
     @State private var capturedImages: [UIImage] = []  // Multi-photo capture for meal mode
 
     var body: some View {
@@ -72,14 +71,6 @@ struct CameraCaptureView: View {
             }
             .sheet(isPresented: $showPaywall) {
                 PaywallView()
-            }
-            .alert("Scan Limit Reached", isPresented: $showScanLimitAlert) {
-                Button("Upgrade") {
-                    showPaywall = true
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("You've used all 100 scans this month. Upgrade to Unlimited for unrestricted scanning.")
             }
             .task {
                 await cameraService.checkAuthorization()
@@ -132,8 +123,8 @@ struct CameraCaptureView: View {
                 modePicker
                     .padding(.top, 8)
 
-                // Status badge (trial, standard scan count, or expired)
-                if !OwnerBypass.isOwnerDevice && subscriptionManager.currentTier != .unlimited {
+                // Status badge (trial or expired)
+                if !OwnerBypass.isOwnerDevice && !subscriptionManager.isProUser {
                     trialBadge
                         .padding(.top, 4)
                 }
@@ -362,16 +353,6 @@ struct CameraCaptureView: View {
                 let days = trialManager.trialDaysRemaining
                 Text("\(days) day\(days == 1 ? "" : "s") left in trial")
                     .font(.caption.weight(.medium))
-            } else if subscriptionManager.currentTier == .standard {
-                Image(systemName: "camera.fill")
-                    .font(.caption2)
-                let remaining = scanCounter.remainingScans
-                Text("\(scanCounter.monthlyCount) / \(ScanCounter.standardMonthlyLimit) scans")
-                    .font(.caption.weight(.medium))
-                if remaining <= 10 && remaining > 0 {
-                    Text("\(remaining) left")
-                        .font(.caption2.weight(.bold))
-                }
             } else {
                 Image(systemName: "lock.fill")
                     .font(.caption2)
@@ -424,16 +405,9 @@ struct CameraCaptureView: View {
         }
 
         switch subscriptionManager.currentTier {
-        case .unlimited:
+        case .pro:
+            scanCounter.recordScan()
             await analyzeImage(image)
-        case .standard:
-            if scanCounter.canScan(tier: .standard) {
-                scanCounter.recordScan()
-                await analyzeImage(image)
-            } else {
-                // Scan limit reached
-                showScanLimitAlert = true
-            }
         case .none:
             if subscriptionManager.products.isEmpty {
                 await subscriptionManager.loadProducts()
@@ -482,15 +456,9 @@ struct CameraCaptureView: View {
         }
 
         switch subscriptionManager.currentTier {
-        case .unlimited:
+        case .pro:
+            scanCounter.recordScan()
             await analyzeMealImages(images)
-        case .standard:
-            if scanCounter.canScan(tier: .standard) {
-                scanCounter.recordScan()
-                await analyzeMealImages(images)
-            } else {
-                showScanLimitAlert = true
-            }
         case .none:
             if subscriptionManager.products.isEmpty {
                 await subscriptionManager.loadProducts()
@@ -517,15 +485,8 @@ struct CameraCaptureView: View {
         }
 
         switch subscriptionManager.currentTier {
-        case .unlimited:
-            performBarcodeScan(shouldRecordScan: false)
-        case .standard:
-            if scanCounter.canScan(tier: .standard) {
-                // Record scan only after barcode is successfully found
-                performBarcodeScan(shouldRecordScan: true)
-            } else {
-                showScanLimitAlert = true
-            }
+        case .pro:
+            performBarcodeScan(shouldRecordScan: true)
         case .none:
             Task {
                 if subscriptionManager.products.isEmpty {

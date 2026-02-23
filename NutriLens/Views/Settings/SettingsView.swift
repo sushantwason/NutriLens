@@ -86,25 +86,6 @@ struct SettingsView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Subscription status: \(statusLabel), \(statusBadge)")
 
-            // Scan count for Standard tier
-            if subscriptionManager.currentTier == .standard && !OwnerBypass.isOwnerDevice {
-                HStack {
-                    Image(systemName: "camera.fill")
-                        .foregroundStyle(.secondary)
-                    Text("\(scanCounter.monthlyCount) / \(ScanCounter.standardMonthlyLimit) scans used this month")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityElement(children: .combine)
-
-                Button {
-                    Task { await subscriptionManager.loadProducts() }
-                    showPaywall = true
-                } label: {
-                    Label("Upgrade to Unlimited", systemImage: "sparkles")
-                }
-            }
-
             // Trial countdown
             if !subscriptionManager.isProUser && !OwnerBypass.isOwnerDevice {
                 if trialManager.isTrialActive {
@@ -162,22 +143,14 @@ struct SettingsView: View {
 
     private var statusLabel: String {
         if OwnerBypass.isOwnerDevice { return "MealSight Pro" }
-        switch subscriptionManager.currentTier {
-        case .unlimited: return "MealSight Unlimited"
-        case .standard: return "MealSight Standard"
-        case .none: break
-        }
+        if subscriptionManager.isProUser { return "MealSight Pro" }
         if trialManager.isTrialActive { return "Free Trial" }
         return "Trial Expired"
     }
 
     private var statusBadge: String {
         if OwnerBypass.isOwnerDevice { return "Owner" }
-        switch subscriptionManager.currentTier {
-        case .unlimited: return "Unlimited"
-        case .standard: return "Standard"
-        case .none: break
-        }
+        if subscriptionManager.isProUser { return "Pro" }
         if trialManager.isTrialActive { return "Trial" }
         return "Expired"
     }
