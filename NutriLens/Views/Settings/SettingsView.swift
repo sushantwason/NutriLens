@@ -32,7 +32,6 @@ struct SettingsView: View {
             profileSection
             weightSection
             exportSection
-            healthKitSection
             achievementsSection
             referralsSection
             feedbackSection

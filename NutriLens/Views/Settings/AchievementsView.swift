@@ -2,97 +2,132 @@ import SwiftUI
 import SwiftData
 
 struct AchievementsView: View {
-    @Query(filter: #Predicate<Meal> { $0.isConfirmedByUser == true },
-           sort: \Meal.timestamp, order: .reverse)
-    private var allMeals: [Meal]
-    @Query(filter: #Predicate<DailyGoal> { $0.isActive == true }) private var activeGoals: [DailyGoal]
+    @Environment(\.modelContext) private var modelContext
 
-    private var goal: DailyGoal? { activeGoals.first }
-
-    // Cache expensive computations with @State
-    @State private var cachedTotalMeals: Int = 0
-    @State private var cachedUniqueDays: Int = 0
-    @State private var cachedCurrentStreak: Int = 0
+    @State private var totalMeals: Int = 0
+    @State private var uniqueDays: Int = 0
+    @State private var currentStreak: Int = 0
+    @State private var isLoading = true
 
     var body: some View {
         List {
-            Section("Milestones") {
-                milestoneRow(
-                    icon: "fork.knife.circle.fill",
-                    title: "First Meal",
-                    description: "Log your first meal",
-                    achieved: cachedTotalMeals >= 1,
-                    color: .nutriGreen
-                )
-                milestoneRow(
-                    icon: "10.circle.fill",
-                    title: "Getting Started",
-                    description: "Log 10 meals",
-                    achieved: cachedTotalMeals >= 10,
-                    progress: "\(min(cachedTotalMeals, 10))/10",
-                    color: .nutriBlue
-                )
-                milestoneRow(
-                    icon: "50.circle.fill",
-                    title: "Dedicated Logger",
-                    description: "Log 50 meals",
-                    achieved: cachedTotalMeals >= 50,
-                    progress: "\(min(cachedTotalMeals, 50))/50",
-                    color: .nutriPurple
-                )
-                milestoneRow(
-                    icon: "star.circle.fill",
-                    title: "Century Club",
-                    description: "Log 100 meals",
-                    achieved: cachedTotalMeals >= 100,
-                    progress: "\(min(cachedTotalMeals, 100))/100",
-                    color: .nutriOrange
-                )
-            }
+            if isLoading {
+                Section {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .padding(.vertical, 20)
+                }
+            } else {
+                Section("Milestones") {
+                    milestoneRow(
+                        icon: "fork.knife.circle.fill",
+                        title: "First Meal",
+                        description: "Log your first meal",
+                        achieved: totalMeals >= 1,
+                        color: .nutriGreen
+                    )
+                    milestoneRow(
+                        icon: "10.circle.fill",
+                        title: "Getting Started",
+                        description: "Log 10 meals",
+                        achieved: totalMeals >= 10,
+                        progress: "\(min(totalMeals, 10))/10",
+                        color: .nutriBlue
+                    )
+                    milestoneRow(
+                        icon: "50.circle.fill",
+                        title: "Dedicated Logger",
+                        description: "Log 50 meals",
+                        achieved: totalMeals >= 50,
+                        progress: "\(min(totalMeals, 50))/50",
+                        color: .nutriPurple
+                    )
+                    milestoneRow(
+                        icon: "star.circle.fill",
+                        title: "Century Club",
+                        description: "Log 100 meals",
+                        achieved: totalMeals >= 100,
+                        progress: "\(min(totalMeals, 100))/100",
+                        color: .nutriOrange
+                    )
+                }
 
-            Section("Badges") {
-                badgeRow(
-                    icon: "flame.fill",
-                    title: "On Fire",
-                    description: "Reach a 3-day streak",
-                    achieved: cachedCurrentStreak >= 3,
-                    color: .nutriOrange
-                )
-                badgeRow(
-                    icon: "flame.circle.fill",
-                    title: "Streak Master",
-                    description: "Reach a 7-day streak",
-                    achieved: cachedCurrentStreak >= 7,
-                    color: .nutriRed
-                )
-                badgeRow(
-                    icon: "calendar.circle.fill",
-                    title: "Week Warrior",
-                    description: "Log meals on 7 different days",
-                    achieved: cachedUniqueDays >= 7,
-                    color: .nutriGreen
-                )
-                badgeRow(
-                    icon: "calendar.badge.checkmark",
-                    title: "Monthly Champion",
-                    description: "Log meals on 30 different days",
-                    achieved: cachedUniqueDays >= 30,
-                    color: .nutriBlue
-                )
+                Section("Badges") {
+                    badgeRow(
+                        icon: "flame.fill",
+                        title: "On Fire",
+                        description: "Reach a 3-day streak",
+                        achieved: currentStreak >= 3,
+                        color: .nutriOrange
+                    )
+                    badgeRow(
+                        icon: "flame.circle.fill",
+                        title: "Streak Master",
+                        description: "Reach a 7-day streak",
+                        achieved: currentStreak >= 7,
+                        color: .nutriRed
+                    )
+                    badgeRow(
+                        icon: "calendar.circle.fill",
+                        title: "Week Warrior",
+                        description: "Log meals on 7 different days",
+                        achieved: uniqueDays >= 7,
+                        color: .nutriGreen
+                    )
+                    badgeRow(
+                        icon: "calendar.badge.checkmark",
+                        title: "Monthly Champion",
+                        description: "Log meals on 30 different days",
+                        achieved: uniqueDays >= 30,
+                        color: .nutriBlue
+                    )
+                }
             }
         }
         .navigationTitle("Achievements")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            recalculate()
+            await loadData()
         }
     }
 
-    private func recalculate() {
-        cachedTotalMeals = allMeals.count
-        cachedUniqueDays = Set(allMeals.map { Calendar.current.startOfDay(for: $0.timestamp) }).count
-        if let goal {
-            cachedCurrentStreak = StreakManager.currentStreakLength(meals: Array(allMeals), goal: goal)
+    private func loadData() async {
+        // Run heavy computation off main actor
+        let context = modelContext
+        let meals: [Meal]
+        let goals: [DailyGoal]
+        do {
+            let mealDescriptor = FetchDescriptor<Meal>(
+                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true }
+            )
+            meals = try context.fetch(mealDescriptor)
+
+            let goalDescriptor = FetchDescriptor<DailyGoal>(
+                predicate: #Predicate<DailyGoal> { $0.isActive == true }
+            )
+            goals = try context.fetch(goalDescriptor)
+        } catch {
+            isLoading = false
+            return
+        }
+
+        let count = meals.count
+        let days = Set(meals.map { Calendar.current.startOfDay(for: $0.timestamp) }).count
+        let streak: Int
+        if let goal = goals.first {
+            streak = StreakManager.currentStreakLength(meals: meals, goal: goal)
+        } else {
+            streak = 0
+        }
+
+        await MainActor.run {
+            totalMeals = count
+            uniqueDays = days
+            currentStreak = streak
+            isLoading = false
         }
     }
 
