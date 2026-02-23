@@ -76,11 +76,11 @@ struct DisclaimersView: View {
             }
 
             Section {
-                Link(destination: URL(string: "https://mealsightapp.com/privacy")!) {
+                Link(destination: URL(string: "https://nutrilens-api.nutrilens.workers.dev/privacy")!) {
                     Label("Privacy Policy", systemImage: "hand.raised.fill")
                 }
 
-                Link(destination: URL(string: "https://mealsightapp.com/terms")!) {
+                Link(destination: URL(string: "https://nutrilens-api.nutrilens.workers.dev/terms")!) {
                     Label("Terms of Service", systemImage: "doc.text")
                 }
             } header: {

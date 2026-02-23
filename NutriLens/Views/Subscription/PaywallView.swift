@@ -327,10 +327,10 @@ struct PaywallView: View {
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {
-                if let privacyURL = URL(string: "https://mealsightapp.com/privacy") {
+                if let privacyURL = URL(string: "https://nutrilens-api.nutrilens.workers.dev/privacy") {
                     Link("Privacy Policy", destination: privacyURL)
                 }
-                if let termsURL = URL(string: "https://mealsightapp.com/terms") {
+                if let termsURL = URL(string: "https://nutrilens-api.nutrilens.workers.dev/terms") {
                     Link("Terms of Use", destination: termsURL)
                 }
             }
