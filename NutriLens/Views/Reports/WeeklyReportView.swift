@@ -51,28 +51,24 @@ struct WeeklyReportView: View {
     }
 
     private func loadData() async {
-        let context = modelContext
-        let meals: [Meal]
+        let cutoff = Calendar.current.date(byAdding: .weekOfYear, value: -2, to: Date()) ?? Date()
+
+        // Yield main actor before doing the fetch so the UI can render the loading state
+        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+
+        var descriptor = FetchDescriptor<Meal>(
+            predicate: #Predicate<Meal> { $0.isConfirmedByUser == true && $0.timestamp >= cutoff },
+            sortBy: [SortDescriptor(\Meal.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = 500
+
         do {
-            var descriptor = FetchDescriptor<Meal>(
-                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true },
-                sortBy: [SortDescriptor(\Meal.timestamp, order: .reverse)]
-            )
-            // Only need last 2 weeks for comparison
-            let cutoff = Calendar.current.date(byAdding: .weekOfYear, value: -2, to: Date()) ?? Date()
-            descriptor.predicate = #Predicate<Meal> { $0.isConfirmedByUser == true && $0.timestamp >= cutoff }
-            meals = try context.fetch(descriptor)
+            let meals = try modelContext.fetch(descriptor)
+            cachedComparison = WeeklyReportCalculator.generateComparison(meals: meals)
         } catch {
-            isLoading = false
-            return
+            // Use empty comparison
         }
-
-        let result = WeeklyReportCalculator.generateComparison(meals: meals)
-
-        await MainActor.run {
-            cachedComparison = result
-            isLoading = false
-        }
+        isLoading = false
     }
 
     // MARK: - Week Header

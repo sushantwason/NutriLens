@@ -137,6 +137,13 @@ struct MealAnalysisResultView: View {
                 }
             }
 
+            // Disclaimer
+            Section {
+                Text("Nutritional values are AI-generated estimates and may differ from actual content. Not medical advice.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
             // Feedback banner (shown after save)
             if viewModel.showFeedbackBanner {
                 Section {

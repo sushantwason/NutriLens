@@ -112,7 +112,7 @@ Respond ONLY with JSON in this exact format:
 
 const COACH_PROMPT = {
   system:
-    "You are a friendly, concise nutrition coach inside the NutriLens app. Give a brief motivational nudge based on the user's daily nutrition progress. Be encouraging, specific, and actionable. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
+    "You are a friendly, concise nutrition coach inside the MealSight app. Give a brief motivational nudge based on the user's daily nutrition progress. Be encouraging, specific, and actionable. Also suggest a specific meal or recipe that would help them hit their remaining macro targets for the day. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
   userTemplate: (data) => `Here is the user's nutrition progress for today:
 
 Calories: ${data.calories} / ${data.calorieTarget} kcal
@@ -123,13 +123,22 @@ Current streak: ${data.streak} days
 Time of day: ${data.timeOfDay}
 ${data.restrictions ? `Dietary restrictions: ${data.restrictions}` : ""}
 
-Based on this progress, provide a brief motivational message (1-2 sentences), a relevant emoji, and a specific actionable tip.
+Based on this progress, provide:
+1. A brief motivational message (1-2 sentences)
+2. A relevant emoji
+3. A specific actionable tip
+4. A meal or recipe suggestion that fits the user's remaining calorie/macro budget for the day. Consider the time of day and any dietary restrictions.
 
 Respond ONLY with JSON in this exact format:
 {
   "message": "string",
   "emoji": "string",
-  "tip": "string"
+  "tip": "string",
+  "mealSuggestion": {
+    "name": "string",
+    "description": "string",
+    "estimatedCalories": 0
+  }
 }`,
 };
 
@@ -303,50 +312,26 @@ async function handleFeedback(body, env) {
     );
   }
 
-  const subject = `[${category}] MealSight Feedback`;
-  const emailBody = `Category: ${category}\n\n${trimmedMessage}\n\n---\n${appVersion || "MealSight"}`;
-
   try {
-    const mailResponse = await fetch("https://api.mailchannels.net/tx/v1/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [
-          {
-            to: [{ email: "nutrilenshealth@gmail.com", name: "MealSight Team" }],
-          },
-        ],
-        from: {
-          email: "feedback@mealsightapp.com",
-          name: "MealSight Feedback",
-        },
-        subject: subject,
-        content: [
-          {
-            type: "text/plain",
-            value: emailBody,
-          },
-        ],
-      }),
-    });
+    const id = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
+    const entry = {
+      id,
+      category,
+      message: trimmedMessage,
+      appVersion: appVersion || "MealSight",
+      timestamp: new Date().toISOString(),
+    };
 
-    if (mailResponse.status === 202 || mailResponse.status === 200) {
-      return Response.json(
-        { success: true },
-        { status: 200, headers: corsHeaders() }
-      );
-    } else {
-      const errorText = await mailResponse.text();
-      console.error("MailChannels error:", mailResponse.status, errorText);
-      return Response.json(
-        { error: "Failed to send feedback email" },
-        { status: 502, headers: corsHeaders() }
-      );
-    }
+    await env.FEEDBACK.put(id, JSON.stringify(entry));
+
+    return Response.json(
+      { success: true },
+      { status: 200, headers: corsHeaders() }
+    );
   } catch (err) {
     return Response.json(
-      { error: "Failed to send feedback", detail: err.message },
-      { status: 502, headers: corsHeaders() }
+      { error: "Failed to save feedback", detail: err.message },
+      { status: 500, headers: corsHeaders() }
     );
   }
 }

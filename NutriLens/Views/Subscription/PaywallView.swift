@@ -65,7 +65,7 @@ struct PaywallView: View {
             billingOption(label: "Monthly", selected: !isAnnual) {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = false }
             }
-            billingOption(label: "Annual", selected: isAnnual, badge: "Save 40%") {
+            billingOption(label: "Annual", selected: isAnnual, badge: "Save 25%") {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = true }
             }
         }
@@ -103,7 +103,7 @@ struct PaywallView: View {
                 planCard(
                     tier: .standard,
                     name: "Standard",
-                    price: subscriptionManager.standardAnnualProduct?.displayPrice ?? "$34.99",
+                    price: subscriptionManager.standardAnnualProduct?.displayPrice ?? "$44.99",
                     period: "/year",
                     monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.standardAnnualProduct),
                     features: [
@@ -118,7 +118,7 @@ struct PaywallView: View {
                 planCard(
                     tier: .unlimited,
                     name: "Unlimited",
-                    price: subscriptionManager.unlimitedAnnualProduct?.displayPrice ?? "$69.99",
+                    price: subscriptionManager.unlimitedAnnualProduct?.displayPrice ?? "$89.99",
                     period: "/year",
                     monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.unlimitedAnnualProduct),
                     features: [

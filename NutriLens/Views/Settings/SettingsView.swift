@@ -418,6 +418,12 @@ struct SettingsView: View {
         Section("About") {
             LabeledContent("Version", value: "1.0 (6)")
             LabeledContent("AI Model", value: "Claude Sonnet")
+
+            NavigationLink {
+                DisclaimersView()
+            } label: {
+                Label("Disclaimers & Legal", systemImage: "doc.text")
+            }
         }
     }
 

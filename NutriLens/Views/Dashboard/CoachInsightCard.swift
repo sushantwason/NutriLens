@@ -39,19 +39,12 @@ struct CoachInsightCard: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.nutriPurple)
                 Spacer()
-                Button {
-                    onRefresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
 
             // Message
             Text(insight.message)
                 .font(.subheadline)
-                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
 
             // Tip
             HStack(alignment: .top, spacing: 6) {
@@ -66,8 +59,47 @@ struct CoachInsightCard: View {
             }
             .padding(8)
             .background(Color.nutriOrange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+
+            // Meal suggestion
+            if let suggestion = insight.mealSuggestion {
+                mealSuggestionView(suggestion)
+            }
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - Meal Suggestion
+
+    private func mealSuggestionView(_ suggestion: MealSuggestion) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "fork.knife.circle.fill")
+                .font(.title3)
+                .foregroundStyle(.nutriGreen)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Try This")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.nutriGreen)
+                    .textCase(.uppercase)
+
+                Text(suggestion.name)
+                    .font(.subheadline.weight(.semibold))
+
+                Text(suggestion.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if suggestion.estimatedCalories > 0 {
+                    Text("~\(suggestion.estimatedCalories) kcal")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.calorieColor)
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.nutriGreen.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
     }
 }

@@ -99,22 +99,21 @@ struct ExportView: View {
     }
 
     private func loadMeals() async {
-        let context = modelContext
+        // Yield to let the loading UI render before fetch blocks main actor
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        let sixMonthsAgo = Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date()
         do {
-            let descriptor = FetchDescriptor<Meal>(
-                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true },
+            var descriptor = FetchDescriptor<Meal>(
+                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true && $0.timestamp >= sixMonthsAgo },
                 sortBy: [SortDescriptor(\Meal.timestamp, order: .reverse)]
             )
-            let meals = try context.fetch(descriptor)
-            await MainActor.run {
-                allMeals = meals
-                isLoading = false
-            }
+            descriptor.fetchLimit = 5000
+            allMeals = try modelContext.fetch(descriptor)
         } catch {
-            await MainActor.run {
-                isLoading = false
-            }
+            allMeals = []
         }
+        isLoading = false
     }
 
     private func exportData() {

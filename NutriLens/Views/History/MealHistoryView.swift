@@ -72,17 +72,7 @@ struct MealHistoryView: View {
             if !favoriteMeals.isEmpty && searchText.isEmpty {
                 Section("Favorites") {
                     ForEach(favoriteMeals) { meal in
-                        NavigationLink(destination: MealDetailView(meal: meal)) {
-                            MealHistoryRow(meal: meal)
-                        }
-                        .swipeActions(edge: .leading) {
-                            Button {
-                                relogMeal(meal)
-                            } label: {
-                                Label("Log Again", systemImage: "arrow.clockwise")
-                            }
-                            .tint(.nutriGreen)
-                        }
+                        mealRow(meal)
                     }
                 }
             }
@@ -91,43 +81,75 @@ struct MealHistoryView: View {
             ForEach(groupedMeals, id: \.0) { section, sectionMeals in
                 Section(section) {
                     ForEach(sectionMeals) { meal in
-                        NavigationLink(destination: MealDetailView(meal: meal)) {
-                            MealHistoryRow(meal: meal)
-                        }
-                        .swipeActions(edge: .leading) {
-                            Button {
-                                relogMeal(meal)
-                            } label: {
-                                Label("Log Again", systemImage: "arrow.clockwise")
-                            }
-                            .tint(.nutriGreen)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button {
-                                meal.isFavorite.toggle()
-                                try? modelContext.save()
-                            } label: {
-                                Label(
-                                    meal.isFavorite ? "Unfavorite" : "Favorite",
-                                    systemImage: meal.isFavorite ? "heart.slash" : "heart"
-                                )
-                            }
-                            .tint(.nutriRed)
-
-                            Button(role: .destructive) {
-                                HapticService.mealDeleted()
-                                modelContext.delete(meal)
-                                try? modelContext.save()
-                                WidgetCenter.shared.reloadAllTimelines()
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
+                        mealRow(meal)
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    private func mealRow(_ meal: Meal) -> some View {
+        NavigationLink(destination: MealDetailView(meal: meal)) {
+            MealHistoryRow(meal: meal)
+        }
+        .swipeActions(edge: .leading) {
+            Button {
+                relogMeal(meal)
+            } label: {
+                Label("One More", systemImage: "plus.circle")
+            }
+            .tint(.nutriGreen)
+        }
+        .swipeActions(edge: .trailing) {
+            Button {
+                meal.isFavorite.toggle()
+                try? modelContext.save()
+            } label: {
+                Label(
+                    meal.isFavorite ? "Unfavorite" : "Favorite",
+                    systemImage: meal.isFavorite ? "heart.slash" : "heart"
+                )
+            }
+            .tint(.nutriRed)
+
+            Button(role: .destructive) {
+                HapticService.mealDeleted()
+                modelContext.delete(meal)
+                try? modelContext.save()
+                WidgetCenter.shared.reloadAllTimelines()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .contextMenu {
+            Button {
+                relogMeal(meal)
+            } label: {
+                Label("One More", systemImage: "plus.circle")
+            }
+
+            Button {
+                meal.isFavorite.toggle()
+                try? modelContext.save()
+            } label: {
+                Label(
+                    meal.isFavorite ? "Unfavorite" : "Favorite",
+                    systemImage: meal.isFavorite ? "heart.slash" : "heart"
+                )
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                HapticService.mealDeleted()
+                modelContext.delete(meal)
+                try? modelContext.save()
+                WidgetCenter.shared.reloadAllTimelines()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 
     private func relogMeal(_ meal: Meal) {
