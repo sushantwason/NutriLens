@@ -47,6 +47,9 @@ struct NutritionTrackingView: View {
                     if !filteredWeightEntries.isEmpty {
                         weightTrendChart
                     }
+
+                    // Deep-dive links
+                    reportLinksSection
                 }
                 .padding()
             }
@@ -63,6 +66,71 @@ struct NutritionTrackingView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Report Links
+
+    private var reportLinksSection: some View {
+        VStack(spacing: 12) {
+            NavigationLink {
+                InteractiveChartsView()
+            } label: {
+                reportLinkRow(
+                    icon: "chart.xyaxis.line",
+                    color: .nutriOrange,
+                    title: "Interactive Charts",
+                    subtitle: "Tap and explore your nutrition data"
+                )
+            }
+
+            NavigationLink {
+                TrendsView()
+            } label: {
+                reportLinkRow(
+                    icon: "chart.line.uptrend.xyaxis",
+                    color: .nutriBlue,
+                    title: "Trends",
+                    subtitle: "Weekly and monthly nutrition trends"
+                )
+            }
+
+            NavigationLink {
+                WeeklyReportView()
+            } label: {
+                reportLinkRow(
+                    icon: "chart.bar.doc.horizontal.fill",
+                    color: .nutriGreen,
+                    title: "Weekly Report",
+                    subtitle: "Detailed breakdown of your week"
+                )
+            }
+        }
+    }
+
+    private func reportLinkRow(icon: String, color: Color, title: String, subtitle: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(color)
+                .frame(width: 36, height: 36)
+                .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.medium))
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 
     // MARK: - Calorie Bar Chart

@@ -3,14 +3,13 @@ import SwiftData
 import Charts
 
 struct WeeklyReportView: View {
-    @Query(filter: #Predicate<Meal> { $0.isConfirmedByUser == true },
-           sort: \Meal.timestamp, order: .reverse)
-    private var allMeals: [Meal]
+    @Environment(\.modelContext) private var modelContext
 
     @Query(filter: #Predicate<DailyGoal> { $0.isActive == true })
     private var activeGoals: [DailyGoal]
 
     @State private var cachedComparison: WeekComparison?
+    @State private var isLoading = true
 
     private var comparison: WeekComparison {
         cachedComparison ?? WeeklyReportCalculator.generateComparison(meals: [])
@@ -26,22 +25,53 @@ struct WeeklyReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                weekHeader
-                dailyAveragesCard
-                weekComparisonCard
-                dailyChartCard
-                highlightsCard
+            if isLoading {
+                VStack {
+                    Spacer(minLength: 100)
+                    ProgressView()
+                    Spacer(minLength: 100)
+                }
+                .frame(maxWidth: .infinity)
+            } else {
+                VStack(spacing: 16) {
+                    weekHeader
+                    dailyAveragesCard
+                    weekComparisonCard
+                    dailyChartCard
+                    highlightsCard
+                }
+                .padding()
             }
-            .padding()
         }
         .navigationTitle("Weekly Report")
         .background(Color(.systemGroupedBackground))
-        .onAppear {
-            cachedComparison = WeeklyReportCalculator.generateComparison(meals: Array(allMeals))
+        .task {
+            await loadData()
         }
-        .onChange(of: allMeals.count) { _, _ in
-            cachedComparison = WeeklyReportCalculator.generateComparison(meals: Array(allMeals))
+    }
+
+    private func loadData() async {
+        let context = modelContext
+        let meals: [Meal]
+        do {
+            var descriptor = FetchDescriptor<Meal>(
+                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true },
+                sortBy: [SortDescriptor(\Meal.timestamp, order: .reverse)]
+            )
+            // Only need last 2 weeks for comparison
+            let cutoff = Calendar.current.date(byAdding: .weekOfYear, value: -2, to: Date()) ?? Date()
+            descriptor.predicate = #Predicate<Meal> { $0.isConfirmedByUser == true && $0.timestamp >= cutoff }
+            meals = try context.fetch(descriptor)
+        } catch {
+            isLoading = false
+            return
+        }
+
+        let result = WeeklyReportCalculator.generateComparison(meals: meals)
+
+        await MainActor.run {
+            cachedComparison = result
+            isLoading = false
         }
     }
 

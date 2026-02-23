@@ -2,9 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct ExportView: View {
-    @Query(filter: #Predicate<Meal> { $0.isConfirmedByUser == true },
-           sort: \Meal.timestamp, order: .reverse)
-    private var allMeals: [Meal]
+    @Environment(\.modelContext) private var modelContext
 
     @Query(filter: #Predicate<DailyGoal> { $0.isActive == true })
     private var activeGoals: [DailyGoal]
@@ -13,6 +11,9 @@ struct ExportView: View {
     @State private var range: ExportRange = .week
     @State private var shareURL: URL?
     @State private var showShareSheet = false
+    @State private var allMeals: [Meal] = []
+    @State private var isLoading = true
+    @State private var isExporting = false
 
     private var filteredMeals: [Meal] {
         ExportService.filteredMeals(allMeals, range: range)
@@ -20,58 +21,76 @@ struct ExportView: View {
 
     var body: some View {
         Form {
-            Section("Format") {
-                Picker("Format", selection: $format) {
-                    ForEach(ExportFormat.allCases) { fmt in
-                        Text(fmt.rawValue).tag(fmt)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Section("Date Range") {
-                Picker("Range", selection: $range) {
-                    ForEach(ExportRange.allCases) { r in
-                        Text(r.rawValue).tag(r)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Section {
-                HStack {
-                    Label("Meals", systemImage: "fork.knife")
-                    Spacer()
-                    Text("\(filteredMeals.count)")
-                        .foregroundStyle(.secondary)
-                }
-
-                if !filteredMeals.isEmpty, let first = filteredMeals.last?.timestamp, let last = filteredMeals.first?.timestamp {
+            if isLoading {
+                Section {
                     HStack {
-                        Label("Period", systemImage: "calendar")
                         Spacer()
-                        Text("\(first.mediumDateString) – \(last.mediumDateString)")
-                            .font(.caption)
+                        ProgressView()
+                        Spacer()
+                    }
+                    .padding(.vertical, 20)
+                }
+            } else {
+                Section("Format") {
+                    Picker("Format", selection: $format) {
+                        ForEach(ExportFormat.allCases) { fmt in
+                            Text(fmt.rawValue).tag(fmt)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section("Date Range") {
+                    Picker("Range", selection: $range) {
+                        ForEach(ExportRange.allCases) { r in
+                            Text(r.rawValue).tag(r)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                Section {
+                    HStack {
+                        Label("Meals", systemImage: "fork.knife")
+                        Spacer()
+                        Text("\(filteredMeals.count)")
                             .foregroundStyle(.secondary)
                     }
-                }
-            }
 
-            Section {
-                Button {
-                    exportData()
-                } label: {
-                    HStack {
-                        Spacer()
-                        Label("Export \(format.rawValue)", systemImage: format == .csv ? "tablecells" : "doc.richtext")
-                            .font(.headline)
-                        Spacer()
+                    if !filteredMeals.isEmpty, let first = filteredMeals.last?.timestamp, let last = filteredMeals.first?.timestamp {
+                        HStack {
+                            Label("Period", systemImage: "calendar")
+                            Spacer()
+                            Text("\(first.mediumDateString) – \(last.mediumDateString)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
-                .disabled(filteredMeals.isEmpty)
+
+                Section {
+                    Button {
+                        exportData()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            if isExporting {
+                                ProgressView()
+                            } else {
+                                Label("Export \(format.rawValue)", systemImage: format == .csv ? "tablecells" : "doc.richtext")
+                                    .font(.headline)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .disabled(filteredMeals.isEmpty || isExporting)
+                }
             }
         }
         .navigationTitle("Export Data")
+        .task {
+            await loadMeals()
+        }
         .sheet(isPresented: $showShareSheet) {
             if let url = shareURL {
                 ShareSheetView(activityItems: [url])
@@ -79,16 +98,45 @@ struct ExportView: View {
         }
     }
 
-    private func exportData() {
-        let url: URL
-        switch format {
-        case .csv:
-            url = ExportService.generateCSV(meals: filteredMeals)
-        case .pdf:
-            url = ExportService.generatePDF(meals: filteredMeals, goal: activeGoals.first)
+    private func loadMeals() async {
+        let context = modelContext
+        do {
+            let descriptor = FetchDescriptor<Meal>(
+                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true },
+                sortBy: [SortDescriptor(\Meal.timestamp, order: .reverse)]
+            )
+            let meals = try context.fetch(descriptor)
+            await MainActor.run {
+                allMeals = meals
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoading = false
+            }
         }
-        shareURL = url
-        showShareSheet = true
+    }
+
+    private func exportData() {
+        isExporting = true
+        let mealsToExport = filteredMeals
+        let goal = activeGoals.first
+        let selectedFormat = format
+
+        Task.detached {
+            let url: URL
+            switch selectedFormat {
+            case .csv:
+                url = ExportService.generateCSV(meals: mealsToExport)
+            case .pdf:
+                url = ExportService.generatePDF(meals: mealsToExport, goal: goal)
+            }
+            await MainActor.run {
+                shareURL = url
+                isExporting = false
+                showShareSheet = true
+            }
+        }
     }
 }
 

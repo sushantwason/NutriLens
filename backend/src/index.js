@@ -285,6 +285,72 @@ async function handleCoach(body, env) {
   }
 }
 
+async function handleFeedback(body, env) {
+  const { category, message, appVersion } = body;
+
+  if (!category || !message) {
+    return Response.json(
+      { error: "Missing required fields: category, message" },
+      { status: 400, headers: corsHeaders() }
+    );
+  }
+
+  const trimmedMessage = message.trim();
+  if (trimmedMessage.length === 0) {
+    return Response.json(
+      { error: "Message cannot be empty" },
+      { status: 400, headers: corsHeaders() }
+    );
+  }
+
+  const subject = `[${category}] MealSight Feedback`;
+  const emailBody = `Category: ${category}\n\n${trimmedMessage}\n\n---\n${appVersion || "MealSight"}`;
+
+  try {
+    const mailResponse = await fetch("https://api.mailchannels.net/tx/v1/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        personalizations: [
+          {
+            to: [{ email: "nutrilenshealth@gmail.com", name: "MealSight Team" }],
+          },
+        ],
+        from: {
+          email: "feedback@mealsightapp.com",
+          name: "MealSight Feedback",
+        },
+        subject: subject,
+        content: [
+          {
+            type: "text/plain",
+            value: emailBody,
+          },
+        ],
+      }),
+    });
+
+    if (mailResponse.status === 202 || mailResponse.status === 200) {
+      return Response.json(
+        { success: true },
+        { status: 200, headers: corsHeaders() }
+      );
+    } else {
+      const errorText = await mailResponse.text();
+      console.error("MailChannels error:", mailResponse.status, errorText);
+      return Response.json(
+        { error: "Failed to send feedback email" },
+        { status: 502, headers: corsHeaders() }
+      );
+    }
+  } catch (err) {
+    return Response.json(
+      { error: "Failed to send feedback", detail: err.message },
+      { status: 502, headers: corsHeaders() }
+    );
+  }
+}
+
 export default {
   async fetch(request, env) {
     // Handle CORS preflight
@@ -326,6 +392,8 @@ export default {
       return handleAnalyze(body, env);
     } else if (url.pathname === "/api/coach") {
       return handleCoach(body, env);
+    } else if (url.pathname === "/api/feedback") {
+      return handleFeedback(body, env);
     } else {
       return Response.json(
         { error: "Not found" },

@@ -7,7 +7,7 @@ struct AppTutorialView: View {
                 tutorialRow(
                     icon: "camera.fill",
                     title: "Scan a Meal",
-                    description: "Tap the Scan Meal button on the Dashboard. Point your camera at any meal, nutrition label, or barcode.",
+                    description: "Tap the Scan Meal button on the Dashboard. Point your camera at any meal, nutrition label, or recipe.",
                     color: .nutriGreen
                 )
                 tutorialRow(
@@ -21,6 +21,51 @@ struct AppTutorialView: View {
                     title: "Track Progress",
                     description: "View your daily calories, macros, and trends on the Dashboard and Tracking tabs.",
                     color: .nutriOrange
+                )
+            }
+
+            Section("Photo Tips for Best Results") {
+                tutorialRow(
+                    icon: "light.max",
+                    title: "Good Lighting",
+                    description: "Natural daylight gives the best results. Avoid harsh shadows or very dim environments — the AI needs to clearly see each item.",
+                    color: .nutriOrange
+                )
+                tutorialRow(
+                    icon: "arrow.up.circle.fill",
+                    title: "Shoot from Above",
+                    description: "A top-down angle (bird's eye view) lets the AI see every item on your plate and better estimate portion sizes.",
+                    color: .nutriGreen
+                )
+                tutorialRow(
+                    icon: "arrow.left.and.right.circle.fill",
+                    title: "Fill the Frame",
+                    description: "Get close enough so the food fills most of the photo. Avoid too much empty space around the plate.",
+                    color: .nutriBlue
+                )
+                tutorialRow(
+                    icon: "eye.fill",
+                    title: "Show All Items",
+                    description: "Spread items out so nothing is hidden or stacked. The AI can only analyze what it can see — uncover toppings and sides.",
+                    color: .nutriPurple
+                )
+                tutorialRow(
+                    icon: "hand.raised.fill",
+                    title: "Keep It Steady",
+                    description: "Hold your phone still while capturing. A blurry photo makes it harder for the AI to identify foods accurately.",
+                    color: .calorieColor
+                )
+                tutorialRow(
+                    icon: "circle.dashed",
+                    title: "Use a Plate for Scale",
+                    description: "Plates and bowls help the AI estimate portions. Food on a standard plate is easier to measure than food in your hand.",
+                    color: .nutriGreen
+                )
+                tutorialRow(
+                    icon: "exclamationmark.triangle.fill",
+                    title: "Avoid Obstructions",
+                    description: "Keep utensils, napkins, and hands out of the way. A clear view of just the food gives the most accurate analysis.",
+                    color: .nutriRed
                 )
             }
 
@@ -57,13 +102,7 @@ struct AppTutorialView: View {
                 )
             }
 
-            Section("Tips") {
-                tutorialRow(
-                    icon: "lightbulb.fill",
-                    title: "Better Scans",
-                    description: "For best results, photograph your meal from above with good lighting. Include all items in the frame.",
-                    color: .nutriOrange
-                )
+            Section("More Tips") {
                 tutorialRow(
                     icon: "barcode.viewfinder",
                     title: "Barcode Scanning",
@@ -71,10 +110,22 @@ struct AppTutorialView: View {
                     color: .nutriGreen
                 )
                 tutorialRow(
+                    icon: "doc.text.viewfinder",
+                    title: "Nutrition Labels",
+                    description: "Switch to Label mode to scan packaged food labels. The AI reads serving size, calories, and all macros automatically.",
+                    color: .nutriBlue
+                )
+                tutorialRow(
+                    icon: "book.fill",
+                    title: "Recipe Scanning",
+                    description: "Switch to Recipe mode to scan a recipe from a cookbook, website, or handwritten note. Get per-serving nutrition breakdowns.",
+                    color: .nutriOrange
+                )
+                tutorialRow(
                     icon: "hand.thumbsup.fill",
                     title: "Accuracy Feedback",
                     description: "After each scan, rate the accuracy to help improve future results.",
-                    color: .nutriBlue
+                    color: .nutriPurple
                 )
             }
         }

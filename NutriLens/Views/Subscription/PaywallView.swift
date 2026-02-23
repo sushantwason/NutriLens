@@ -1,16 +1,19 @@
 import SwiftUI
+import StoreKit
 
 struct PaywallView: View {
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedPlan: SubscriptionTier = .unlimited
+    @State private var isAnnual: Bool = true
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     headerSection
+                    billingToggle
                     planCards
                     subscribeButton
                     restoreAndError
@@ -55,38 +58,119 @@ struct PaywallView: View {
         .padding(.top, 20)
     }
 
+    // MARK: - Billing Toggle
+
+    private var billingToggle: some View {
+        HStack(spacing: 0) {
+            billingOption(label: "Monthly", selected: !isAnnual) {
+                withAnimation(.easeInOut(duration: 0.2)) { isAnnual = false }
+            }
+            billingOption(label: "Annual", selected: isAnnual, badge: "Save 40%") {
+                withAnimation(.easeInOut(duration: 0.2)) { isAnnual = true }
+            }
+        }
+        .padding(3)
+        .background(Color(.systemGray5), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func billingOption(label: String, selected: Bool, badge: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.subheadline.weight(selected ? .semibold : .regular))
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(.nutriGreen, in: Capsule())
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(selected ? Color(.systemBackground) : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+            .foregroundStyle(selected ? .primary : .secondary)
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Plan Cards
 
     private var planCards: some View {
         HStack(spacing: 12) {
-            planCard(
-                tier: .standard,
-                name: "Standard",
-                price: subscriptionManager.standardProduct?.displayPrice ?? "$4.99",
-                period: "/month",
-                features: [
-                    "100 scans per month",
-                    "Meal photos & labels",
-                    "Full nutrition tracking"
-                ],
-                tagline: "Perfect for casual trackers",
-                badge: nil
-            )
+            if isAnnual {
+                planCard(
+                    tier: .standard,
+                    name: "Standard",
+                    price: subscriptionManager.standardAnnualProduct?.displayPrice ?? "$34.99",
+                    period: "/year",
+                    monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.standardAnnualProduct),
+                    features: [
+                        "100 scans per month",
+                        "Meal photos & labels",
+                        "Full nutrition tracking"
+                    ],
+                    tagline: "Perfect for casual trackers",
+                    badge: nil
+                )
 
-            planCard(
-                tier: .unlimited,
-                name: "Unlimited",
-                price: subscriptionManager.unlimitedProduct?.displayPrice ?? "$9.99",
-                period: "/month",
-                features: [
-                    "Unlimited scans",
-                    "Meal photos & labels",
-                    "Full nutrition tracking"
-                ],
-                tagline: "Best for daily trackers",
-                badge: "BEST VALUE"
-            )
+                planCard(
+                    tier: .unlimited,
+                    name: "Unlimited",
+                    price: subscriptionManager.unlimitedAnnualProduct?.displayPrice ?? "$69.99",
+                    period: "/year",
+                    monthlyEquivalent: monthlyEquivalent(for: subscriptionManager.unlimitedAnnualProduct),
+                    features: [
+                        "Unlimited scans",
+                        "Meal photos & labels",
+                        "Full nutrition tracking"
+                    ],
+                    tagline: "Best for daily trackers",
+                    badge: "BEST VALUE"
+                )
+            } else {
+                planCard(
+                    tier: .standard,
+                    name: "Standard",
+                    price: subscriptionManager.standardProduct?.displayPrice ?? "$4.99",
+                    period: "/month",
+                    monthlyEquivalent: nil,
+                    features: [
+                        "100 scans per month",
+                        "Meal photos & labels",
+                        "Full nutrition tracking"
+                    ],
+                    tagline: "Perfect for casual trackers",
+                    badge: nil
+                )
+
+                planCard(
+                    tier: .unlimited,
+                    name: "Unlimited",
+                    price: subscriptionManager.unlimitedProduct?.displayPrice ?? "$9.99",
+                    period: "/month",
+                    monthlyEquivalent: nil,
+                    features: [
+                        "Unlimited scans",
+                        "Meal photos & labels",
+                        "Full nutrition tracking"
+                    ],
+                    tagline: "Best for daily trackers",
+                    badge: "BEST VALUE"
+                )
+            }
         }
+    }
+
+    private func monthlyEquivalent(for product: Product?) -> String? {
+        guard let product else { return nil }
+        let monthly = NSDecimalNumber(decimal: product.price / 12)
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = product.priceFormatStyle.locale
+        guard let formatted = formatter.string(from: monthly) else { return nil }
+        return "\(formatted)/mo"
     }
 
     private func planCard(
@@ -94,6 +178,7 @@ struct PaywallView: View {
         name: String,
         price: String,
         period: String,
+        monthlyEquivalent: String?,
         features: [String],
         tagline: String,
         badge: String?
@@ -131,6 +216,12 @@ struct PaywallView: View {
                     Text(period)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+
+                if let monthlyEquivalent {
+                    Text(monthlyEquivalent)
+                        .font(.caption2)
+                        .foregroundStyle(.nutriGreen)
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -171,13 +262,21 @@ struct PaywallView: View {
     private var subscribeButton: some View {
         Button {
             Task {
-                switch selectedPlan {
-                case .standard:
-                    await subscriptionManager.purchaseStandard()
-                case .unlimited:
-                    await subscriptionManager.purchaseUnlimited()
-                case .none:
-                    break
+                let productID: String
+                switch (selectedPlan, isAnnual) {
+                case (.standard, false):
+                    productID = SubscriptionManager.standardMonthlyProductID
+                case (.standard, true):
+                    productID = SubscriptionManager.standardAnnualProductID
+                case (.unlimited, false):
+                    productID = SubscriptionManager.unlimitedMonthlyProductID
+                case (.unlimited, true):
+                    productID = SubscriptionManager.unlimitedAnnualProductID
+                case (.none, _):
+                    return
+                }
+                if let product = subscriptionManager.products.first(where: { $0.id == productID }) {
+                    await subscriptionManager.purchase(product: product)
                 }
             }
         } label: {
@@ -222,7 +321,7 @@ struct PaywallView: View {
 
     private var footerSection: some View {
         VStack(spacing: 8) {
-            Text("Payment will be charged to your Apple ID account. Subscription auto-renews monthly unless cancelled at least 24 hours before the end of the current period.")
+            Text("Payment will be charged to your Apple ID account. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)

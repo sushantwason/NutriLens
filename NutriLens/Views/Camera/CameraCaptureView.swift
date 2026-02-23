@@ -104,6 +104,29 @@ struct CameraCaptureView: View {
                 .accessibilityLabel("Camera preview")
                 .accessibilityAddTraits(.isImage)
 
+            // Show captured/selected image full-screen while analyzing
+            if let image = capturedImage, mealAnalysisVM.analysisState == .analyzing || labelScanVM.analysisState == .analyzing || recipeAnalysisVM.analysisState == .analyzing {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .overlay {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                    }
+                    .overlay {
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .controlSize(.large)
+                                .tint(.white)
+                            Text("Analyzing...")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    .transition(.opacity)
+            }
+
             VStack {
                 // Mode picker
                 modePicker
@@ -128,12 +151,8 @@ struct CameraCaptureView: View {
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
-                    if scanMode == .meal {
-                        capturedImages.append(image)
-                    } else {
-                        capturedImage = image
-                        await attemptScan(with: image)
-                    }
+                    capturedImage = image
+                    await attemptScan(with: image)
                 }
             }
         }
@@ -238,16 +257,12 @@ struct CameraCaptureView: View {
                 .accessibilityLabel("Choose photo from library")
                 .accessibilityHint("Opens photo library to select an image for analysis")
 
-                // Capture button
+                // Capture button — auto-analyzes immediately for all modes
                 Button {
                     Task {
                         if let image = await cameraService.capturePhoto() {
-                            if scanMode == .meal {
-                                capturedImages.append(image)
-                            } else {
-                                capturedImage = image
-                                await attemptScan(with: image)
-                            }
+                            capturedImage = image
+                            await attemptScan(with: image)
                         }
                     }
                 } label: {

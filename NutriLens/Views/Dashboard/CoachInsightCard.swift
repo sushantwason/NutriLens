@@ -54,14 +54,15 @@ struct CoachInsightCard: View {
                 .lineLimit(3)
 
             // Tip
-            HStack(spacing: 6) {
+            HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "lightbulb.fill")
                     .font(.caption)
                     .foregroundStyle(.nutriOrange)
+                    .padding(.top, 1)
                 Text(insight.tip)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(8)
             .background(Color.nutriOrange.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))

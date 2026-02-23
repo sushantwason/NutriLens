@@ -1,5 +1,4 @@
 import SwiftUI
-import MessageUI
 
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
@@ -7,7 +6,9 @@ struct FeedbackView: View {
     @State private var selectedCategory: FeedbackCategory = .general
     @State private var message: String = ""
     @State private var submitted = false
-    @State private var showMailError = false
+    @State private var isSubmitting = false
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     enum FeedbackCategory: String, CaseIterable, Identifiable {
         case general = "General Feedback"
@@ -49,10 +50,10 @@ struct FeedbackView: View {
         }
         .navigationTitle("Feedback")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Unable to Send Email", isPresented: $showMailError) {
+        .alert("Unable to Send Feedback", isPresented: $showError) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("Your device isn't configured for email. Please send your feedback to nutrilenshealth@gmail.com")
+            Text(errorMessage)
         }
     }
 
@@ -93,16 +94,24 @@ struct FeedbackView: View {
 
             Section {
                 Button {
-                    submitFeedback()
+                    Task { await submitFeedback() }
                 } label: {
                     HStack {
                         Spacer()
-                        Label("Submit Feedback", systemImage: "paperplane.fill")
-                            .font(.body.weight(.semibold))
+                        if isSubmitting {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.trailing, 6)
+                            Text("Sending...")
+                                .font(.body.weight(.semibold))
+                        } else {
+                            Label("Submit Feedback", systemImage: "paperplane.fill")
+                                .font(.body.weight(.semibold))
+                        }
                         Spacer()
                     }
                 }
-                .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
             }
         }
     }
@@ -144,33 +153,60 @@ struct FeedbackView: View {
 
     // MARK: - Submit
 
-    private func submitFeedback() {
-        let subject = "[\(selectedCategory.chipLabel)] MealSight Feedback"
-        let body = """
-        Category: \(selectedCategory.chipLabel)
+    private func submitFeedback() async {
+        isSubmitting = true
+        defer { isSubmitting = false }
 
-        \(message)
-
-        ---
-        MealSight v1.0 (6)
-        """
-
-        if let emailURL = createEmailURL(to: "nutrilenshealth@gmail.com", subject: subject, body: body) {
-            UIApplication.shared.open(emailURL) { success in
-                if success {
-                    HapticService.notification(.success)
-                    withAnimation { submitted = true }
-                }
-            }
-        } else {
-            showMailError = true
+        guard let url = URL(string: "\(AppConstants.apiBaseURL)/api/feedback") else {
+            errorMessage = "Invalid server URL."
+            showError = true
+            return
         }
-    }
 
-    private func createEmailURL(to email: String, subject: String, body: String) -> URL? {
-        let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
+        let appVersion = "MealSight v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"))"
+
+        let payload: [String: String] = [
+            "category": selectedCategory.chipLabel,
+            "message": message.trimmingCharacters(in: .whitespacesAndNewlines),
+            "appVersion": appVersion
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
+        request.timeoutInterval = 15
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        } catch {
+            errorMessage = "Failed to prepare feedback."
+            showError = true
+            return
+        }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                errorMessage = "Unexpected server response."
+                showError = true
+                return
+            }
+
+            if httpResponse.statusCode == 200 {
+                HapticService.notification(.success)
+                withAnimation { submitted = true }
+            } else {
+                let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+                let serverError = body?["error"] as? String ?? "Unknown error"
+                errorMessage = "Failed to send: \(serverError)"
+                showError = true
+            }
+        } catch {
+            errorMessage = "Network error: \(error.localizedDescription)"
+            showError = true
+        }
     }
 }
 

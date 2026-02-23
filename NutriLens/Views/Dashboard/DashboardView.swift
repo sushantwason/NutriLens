@@ -69,15 +69,6 @@ struct DashboardView: View {
                     // Smart Insights link
                     smartInsightsLink
 
-                    // Weekly report
-                    weeklyReportLink
-
-                    // Interactive Charts
-                    interactiveChartsLink
-
-                    // Trends
-                    trendsLink
-
                     // Bottom spacer
                     Color.clear.frame(height: 24)
                 }
@@ -287,31 +278,50 @@ struct DashboardView: View {
 
     private var scanAndSearchButtons: some View {
         HStack(spacing: 10) {
-            // Scan Meal (primary)
+            // Scan Meal (primary — premium feel)
             Button {
                 HapticService.scanStarted()
                 showScanSheet = true
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "viewfinder.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                    Text("Scan Meal")
-                        .font(.callout.weight(.bold))
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle()
+                            .fill(.white.opacity(0.2))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "viewfinder")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Scan Meal")
+                            .font(.callout.weight(.bold))
+                        Text("Photo, label, or recipe")
+                            .font(.system(size: 10, weight: .medium))
+                            .opacity(0.8)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.bold))
+                        .opacity(0.6)
                 }
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.28, green: 0.72, blue: 0.40),
-                            Color(red: 0.18, green: 0.55, blue: 0.30)
+                            Color(red: 0.22, green: 0.70, blue: 0.38),
+                            Color(red: 0.14, green: 0.50, blue: 0.26)
                         ],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     ),
-                    in: RoundedRectangle(cornerRadius: 14)
+                    in: RoundedRectangle(cornerRadius: 16)
                 )
+                .shadow(color: Color(red: 0.18, green: 0.55, blue: 0.30).opacity(0.35), radius: 8, y: 4)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Scan Meal")
@@ -322,11 +332,16 @@ struct DashboardView: View {
                 HapticService.buttonTap()
                 showFoodSearch = true
             } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.nutriGreen)
-                    .frame(width: 52, height: 52)
-                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                VStack(spacing: 4) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.nutriGreen)
+                    Text("Search")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 56, height: 56)
+                .background(.nutriGreen.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search Food")
@@ -448,114 +463,6 @@ struct DashboardView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityHint("View patterns, alerts and suggestions")
-    }
-
-    // MARK: - Weekly Report Link
-
-    private var weeklyReportLink: some View {
-        NavigationLink {
-            WeeklyReportView()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.bar.doc.horizontal.fill")
-                    .font(.body)
-                    .foregroundStyle(.nutriGreen)
-                    .frame(width: 36, height: 36)
-                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Weekly Report")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("View your nutrition trends")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("View your nutrition trends")
-    }
-
-    // MARK: - Interactive Charts Link
-
-    private var interactiveChartsLink: some View {
-        NavigationLink {
-            InteractiveChartsView()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.xyaxis.line")
-                    .font(.body)
-                    .foregroundStyle(.nutriOrange)
-                    .frame(width: 36, height: 36)
-                    .background(.nutriOrange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Charts")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("Interactive nutrition charts")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Interactive nutrition charts")
-    }
-
-    // MARK: - Trends Link
-
-    private var trendsLink: some View {
-        NavigationLink {
-            TrendsView()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.body)
-                    .foregroundStyle(.nutriBlue)
-                    .frame(width: 36, height: 36)
-                    .background(.nutriBlue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Trends")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("Monthly & yearly overview")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("Monthly and yearly overview")
     }
 
     private func deleteMeal(_ meal: Meal) {
