@@ -31,6 +31,7 @@ struct SettingsView: View {
             appearanceSection
             dailyGoalsSection
             profileSection
+            dietaryRestrictionsSection
             mealRemindersSection
             exportSection
             achievementsSection
@@ -252,6 +253,37 @@ struct SettingsView: View {
                 .accessibilityHint("Edit your body profile")
             } else {
                 ProgressView()
+            }
+        }
+    }
+
+    // MARK: - Dietary Restrictions
+
+    private var dietaryRestrictionsSection: some View {
+        Section("Dietary Restrictions") {
+            if let profile = profiles.first ?? localProfile {
+                let restrictions = profile.dietaryRestrictions
+                NavigationLink {
+                    DietaryRestrictionsEditorView(profile: profile)
+                } label: {
+                    HStack {
+                        Label("Restrictions", systemImage: "leaf.fill")
+                        Spacer()
+                        if restrictions.isEmpty {
+                            Text("None")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(restrictions.map(\.displayName).joined(separator: ", "))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityValue(restrictions.isEmpty ? "None set" : restrictions.map(\.displayName).joined(separator: ", "))
+                .accessibilityHint("Edit your dietary restrictions for alerts and AI suggestions")
             }
         }
     }
