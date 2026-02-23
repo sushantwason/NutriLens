@@ -81,16 +81,6 @@ struct NutritionTrackingView: View {
                 )
             }
 
-            NavigationLink {
-                WeeklyReportView()
-            } label: {
-                reportLinkRow(
-                    icon: "chart.bar.doc.horizontal.fill",
-                    color: .nutriGreen,
-                    title: "Weekly Report",
-                    subtitle: "Detailed breakdown of your week"
-                )
-            }
         }
     }
 

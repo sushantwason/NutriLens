@@ -7,8 +7,6 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(TrialManager.self) private var trialManager
-    @Environment(HealthKitManager.self) private var healthKitManager
-    @Environment(ScanCounter.self) private var scanCounter
     @Environment(MealReminderManager.self) private var mealReminderManager
 
     @AppStorage("nutrilens.appearance.mode") private var appearanceMode: String = AppearanceMode.system.rawValue
@@ -278,39 +276,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Weight
-
-    private var weightSection: some View {
-        Section("Weight") {
-            NavigationLink {
-                WeightLogView()
-            } label: {
-                Label("Weight Log", systemImage: "scalemass.fill")
-            }
-        }
-    }
-
-    // MARK: - HealthKit
-
-    private var healthKitSection: some View {
-        Section("Apple Health") {
-            NavigationLink {
-                HealthKitSettingsView()
-            } label: {
-                HStack {
-                    Label("HealthKit Sync", systemImage: "heart.fill")
-                    Spacer()
-                    Text(healthKitManager.isAuthorized ? "Connected" : "Off")
-                        .font(.caption)
-                        .foregroundStyle(healthKitManager.isAuthorized ? .nutriGreen : .secondary)
-                }
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityValue(healthKitManager.isAuthorized ? "Connected" : "Off")
-            .accessibilityHint("Configure Apple Health integration")
-        }
-    }
-
     // MARK: - Achievements
 
     private var achievementsSection: some View {
@@ -427,7 +392,5 @@ struct SettingsView: View {
         .modelContainer(for: [DailyGoal.self, UserProfile.self, WeightEntry.self], inMemory: true)
         .environment(SubscriptionManager())
         .environment(TrialManager())
-        .environment(HealthKitManager())
-        .environment(ScanCounter())
         .environment(MealReminderManager())
 }

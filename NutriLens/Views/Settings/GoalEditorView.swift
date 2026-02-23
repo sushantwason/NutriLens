@@ -80,17 +80,6 @@ struct GoalEditorView: View {
                 }
             }
 
-            // MARK: - Water
-            Section("Water") {
-                sliderRow(
-                    value: $goal.waterTargetML,
-                    range: 500...5000,
-                    step: 100,
-                    label: "Daily Water",
-                    unit: "ml",
-                    color: .waterColor
-                )
-            }
         }
         .navigationTitle("Edit Goals")
         .navigationBarTitleDisplayMode(.inline)

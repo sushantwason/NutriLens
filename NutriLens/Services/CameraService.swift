@@ -135,7 +135,7 @@ extension CameraService: AVCaptureMetadataOutputObjectsDelegate {
         didOutput metadataObjects: [AVMetadataObject],
         from connection: AVCaptureConnection
     ) {
-        guard let barcodeContinuation,
+        guard let continuation = barcodeContinuation,
               let metadataObject = metadataObjects.first,
               let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
               let stringValue = readableObject.stringValue else {
@@ -144,6 +144,6 @@ extension CameraService: AVCaptureMetadataOutputObjectsDelegate {
 
         scannedBarcode = stringValue
         self.barcodeContinuation = nil
-        barcodeContinuation.resume(returning: stringValue)
+        continuation.resume(returning: stringValue)
     }
 }
