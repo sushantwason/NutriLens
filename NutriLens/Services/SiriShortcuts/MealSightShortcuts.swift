@@ -20,6 +20,10 @@ struct LogWaterIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
+        guard amountML > 0 else {
+            return .result(dialog: "Please specify a positive amount of water to log.")
+        }
+
         let container = SharedModelContainer.sharedModelContainer
         let context = ModelContext(container)
 
@@ -51,7 +55,7 @@ struct TodaysSummaryIntent: AppIntent {
         let startOfDay = calendar.startOfDay(for: Date())
 
         let predicate = #Predicate<Meal> { meal in
-            meal.timestamp >= startOfDay
+            meal.timestamp >= startOfDay && meal.isConfirmedByUser == true
         }
 
         let descriptor = FetchDescriptor<Meal>(predicate: predicate)
@@ -105,7 +109,7 @@ struct CaloriesRemainingIntent: AppIntent {
         let startOfDay = calendar.startOfDay(for: Date())
 
         let mealPredicate = #Predicate<Meal> { meal in
-            meal.timestamp >= startOfDay
+            meal.timestamp >= startOfDay && meal.isConfirmedByUser == true
         }
         let mealDescriptor = FetchDescriptor<Meal>(predicate: mealPredicate)
         let todayMeals = try context.fetch(mealDescriptor)

@@ -77,6 +77,7 @@ struct InteractiveChartsView: View {
     @State private var activeGoal: DailyGoal?
     @State private var selectedDay: DailyDataPoint?
     @State private var showDayDetail: Bool = false
+    @State private var isLoadingData = false
 
     var body: some View {
         ScrollView {
@@ -110,6 +111,10 @@ struct InteractiveChartsView: View {
     // MARK: - Data Loading
 
     private func loadData() async {
+        guard !isLoadingData else { return }
+        isLoadingData = true
+        defer { isLoadingData = false }
+
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let days = timeRange.days
@@ -172,10 +177,9 @@ struct InteractiveChartsView: View {
             ))
         }
 
-        await MainActor.run {
-            self.dataPoints = points
-            self.activeGoal = goals.first
-        }
+        // Already on MainActor via View context — assign directly
+        self.dataPoints = points
+        self.activeGoal = goals.first
     }
 
     // MARK: - Time Range Picker

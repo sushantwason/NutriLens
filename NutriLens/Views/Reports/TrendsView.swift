@@ -509,11 +509,19 @@ struct TrendsView: View {
     private func loadAllData() async {
         let context = modelContext
 
+        // Only fetch meals from the last 12 months — the maximum range we display.
+        // This avoids loading years of historical data into memory.
+        let calendar = Calendar.current
+        let twelveMonthsAgo = calendar.date(byAdding: .month, value: -12, to: Date()) ?? Date()
+
         do {
-            let descriptor = FetchDescriptor<Meal>(
-                predicate: #Predicate<Meal> { $0.isConfirmedByUser == true },
+            var descriptor = FetchDescriptor<Meal>(
+                predicate: #Predicate<Meal> {
+                    $0.isConfirmedByUser == true && $0.timestamp >= twelveMonthsAgo
+                },
                 sortBy: [SortDescriptor(\Meal.timestamp, order: .forward)]
             )
+            descriptor.fetchLimit = 10000
             let meals = try context.fetch(descriptor)
 
             let weekly = buildWeeklyBuckets(from: meals)
@@ -630,10 +638,12 @@ struct TrendsView: View {
 // MARK: - Macro Data Point (for stacked chart)
 
 private struct MacroDataPoint: Identifiable {
-    let id = UUID()
     let week: String
     let macro: String
     let value: Double
+
+    /// Stable ID to avoid chart redraws when data hasn't changed
+    var id: String { "\(week)-\(macro)" }
 }
 
 // MARK: - Preview

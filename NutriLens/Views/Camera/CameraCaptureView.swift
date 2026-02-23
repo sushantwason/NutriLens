@@ -55,7 +55,10 @@ struct CameraCaptureView: View {
                     Button("Close") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showAnalysis) {
+            .sheet(isPresented: $showAnalysis, onDismiss: {
+                // Free multi-photo memory when analysis sheet closes
+                capturedImages.removeAll()
+            }) {
                 switch scanMode {
                 case .meal:
                     MealAnalysisResultView(viewModel: mealAnalysisVM)

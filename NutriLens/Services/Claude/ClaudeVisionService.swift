@@ -122,17 +122,19 @@ final class ClaudeVisionService {
         request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
         request.timeoutInterval = 90 // longer timeout for multiple images
 
-        // Build JSON body with images array
-        var imagesJSON: [[String: String]] = []
-        for prepared in preparedImages {
-            imagesJSON.append(["image": prepared.base64, "mediaType": prepared.mediaType])
+        // Build JSON body by writing directly to Data to minimize copies of base64 strings
+        var bodyData = Data()
+        bodyData.append(Data("{\"type\":\"\(type)\",\"images\":[".utf8))
+        for (index, prepared) in preparedImages.enumerated() {
+            if index > 0 { bodyData.append(Data(",".utf8)) }
+            bodyData.append(Data("{\"image\":\"".utf8))
+            bodyData.append(Data(prepared.base64.utf8))
+            bodyData.append(Data("\",\"mediaType\":\"".utf8))
+            bodyData.append(Data(prepared.mediaType.utf8))
+            bodyData.append(Data("\"}".utf8))
         }
-
-        let body: [String: Any] = [
-            "type": type,
-            "images": imagesJSON
-        ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        bodyData.append(Data("]}".utf8))
+        request.httpBody = bodyData
 
         let (data, response): (Data, URLResponse)
         do {

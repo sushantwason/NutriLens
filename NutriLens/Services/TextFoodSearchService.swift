@@ -29,7 +29,12 @@ final class TextFoodSearchService {
     private let pageSize = 20
 
     /// Tracks the latest search task so previous in-flight requests can be cancelled.
-    private var currentSearchTask: Task<Void, Never>?
+    /// nonisolated(unsafe) to allow deinit cancellation from non-MainActor context.
+    private nonisolated(unsafe) var currentSearchTask: Task<Void, Never>?
+
+    nonisolated deinit {
+        currentSearchTask?.cancel()
+    }
 
     /// Monotonically increasing token used to discard stale results after debounce.
     private var searchToken: UInt64 = 0

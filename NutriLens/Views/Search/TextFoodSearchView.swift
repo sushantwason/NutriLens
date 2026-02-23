@@ -219,7 +219,10 @@ struct TextFoodSearchView: View {
         HapticService.mealSaved()
 
         showConfirmation = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        // Use Task.sleep instead of DispatchQueue to avoid retain issues if view is dismissed early
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !Task.isCancelled else { return }
             showConfirmation = false
             dismiss()
         }

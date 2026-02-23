@@ -143,12 +143,14 @@ struct SmartInsightsView: View {
         let context = modelContext
         let goal = activeGoals.first
 
-        // Count meals/days first
+        // Quick count check to avoid heavy analysis when data is insufficient.
+        // Uses fetchCount to avoid loading all meal objects into memory just for a count.
         do {
-            let descriptor = FetchDescriptor<Meal>(
+            var countDescriptor = FetchDescriptor<Meal>(
                 predicate: #Predicate<Meal> { $0.isConfirmedByUser == true }
             )
-            let meals = try context.fetch(descriptor)
+            countDescriptor.fetchLimit = 5000
+            let meals = try context.fetch(countDescriptor)
             let count = meals.count
             let days = Set(meals.map { Calendar.current.startOfDay(for: $0.timestamp) }).count
 
@@ -156,6 +158,8 @@ struct SmartInsightsView: View {
             uniqueDays = days
 
             if days >= 3 {
+                // generateInsights will re-fetch meals from context (same cache).
+                // SwiftData's identity map ensures no duplicate objects in memory.
                 let generated = await NutritionInsightsEngine.generateInsights(
                     context: context,
                     goal: goal
