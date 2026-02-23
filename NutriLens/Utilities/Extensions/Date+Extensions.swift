@@ -19,6 +19,12 @@ private let shortDayOfWeekFormatter: DateFormatter = {
     return f
 }()
 
+private let shortDateLabelFormatter: DateFormatter = {
+    let f = DateFormatter()
+    f.dateFormat = "M/d"
+    return f
+}()
+
 extension Date {
     var startOfDay: Date {
         Calendar.current.startOfDay(for: self)
@@ -52,5 +58,9 @@ extension Date {
 
     var shortDayOfWeek: String {
         shortDayOfWeekFormatter.string(from: self)
+    }
+
+    var shortDateLabel: String {
+        shortDateLabelFormatter.string(from: self)
     }
 }

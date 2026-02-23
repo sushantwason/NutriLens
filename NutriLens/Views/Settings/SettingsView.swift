@@ -32,6 +32,7 @@ struct SettingsView: View {
             weightSection
             exportSection
             healthKitSection
+            feedbackSection
             aboutSection
             if OwnerBypass.isOwnerDevice {
                 developerSection
@@ -285,6 +286,30 @@ struct SettingsView: View {
                         .foregroundStyle(healthKitManager.isAuthorized ? .nutriGreen : .secondary)
                 }
             }
+        }
+    }
+
+    // MARK: - Feedback
+
+    private var feedbackSection: some View {
+        Section("Feedback") {
+            NavigationLink {
+                FeedbackView()
+            } label: {
+                Label("Send Feedback", systemImage: "bubble.left.and.bubble.right.fill")
+            }
+
+            Button {
+                requestAppStoreReview()
+            } label: {
+                Label("Rate on App Store", systemImage: "star.fill")
+            }
+        }
+    }
+
+    private func requestAppStoreReview() {
+        if let url = URL(string: "https://apps.apple.com/app/id6745208953?action=write-review") {
+            UIApplication.shared.open(url)
         }
     }
 

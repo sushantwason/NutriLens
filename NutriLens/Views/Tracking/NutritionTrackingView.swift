@@ -78,11 +78,22 @@ struct NutritionTrackingView: View {
             }
             .frame(height: 200)
             .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { value in
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date.shortDayOfWeek)
-                                .font(.caption2)
+                if timeRange == .week {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDayOfWeek)
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                } else {
+                    AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDateLabel)
+                                    .font(.caption2)
+                            }
                         }
                     }
                 }
@@ -138,11 +149,22 @@ struct NutritionTrackingView: View {
                 "Fat": Color.fatColor
             ])
             .chartXAxis {
-                AxisMarks(values: .stride(by: .day)) { value in
-                    AxisValueLabel {
-                        if let date = value.as(Date.self) {
-                            Text(date.shortDayOfWeek)
-                                .font(.caption2)
+                if timeRange == .week {
+                    AxisMarks(values: .stride(by: .day)) { value in
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDayOfWeek)
+                                    .font(.caption2)
+                            }
+                        }
+                    }
+                } else {
+                    AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                        AxisValueLabel {
+                            if let date = value.as(Date.self) {
+                                Text(date.shortDateLabel)
+                                    .font(.caption2)
+                            }
                         }
                     }
                 }
