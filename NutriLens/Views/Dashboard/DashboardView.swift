@@ -17,6 +17,7 @@ struct DashboardView: View {
 
     @State private var coachService = NutritionCoachService()
     @State private var showScanSheet = false
+    @State private var showFoodSearch = false
 
     // Cached streak values to avoid expensive recalculation on every render
     @State private var cachedCurrentStreak: Int = 0
@@ -46,8 +47,8 @@ struct DashboardView: View {
                     // Main calorie + macros hero
                     calorieHeroCard
 
-                    // Full-width Scan Meal button
-                    scanMealButton
+                    // Scan + Search buttons
+                    scanAndSearchButtons
 
                     // Today's meals
                     todayMealsSection
@@ -71,6 +72,12 @@ struct DashboardView: View {
                     // Weekly report
                     weeklyReportLink
 
+                    // Interactive Charts
+                    interactiveChartsLink
+
+                    // Trends
+                    trendsLink
+
                     // Bottom spacer
                     Color.clear.frame(height: 24)
                 }
@@ -81,6 +88,9 @@ struct DashboardView: View {
             .navigationBarHidden(true)
             .fullScreenCover(isPresented: $showScanSheet) {
                 CameraCaptureView()
+            }
+            .sheet(isPresented: $showFoodSearch) {
+                TextFoodSearchView()
             }
             .task {
                 recalculateStreaks()
@@ -113,6 +123,7 @@ struct DashboardView: View {
                 .frame(width: 44, height: 44)
                 .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
                 .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("MealSight")
@@ -142,6 +153,9 @@ struct DashboardView: View {
                 Text("\(cachedCurrentStreak)")
                     .font(.subheadline.weight(.bold))
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Current streak")
+            .accessibilityValue("\(cachedCurrentStreak) \(cachedCurrentStreak == 1 ? "day" : "days")")
 
             NavigationLink {
                 SettingsView()
@@ -152,6 +166,8 @@ struct DashboardView: View {
                     .frame(width: 36, height: 36)
                     .background(.ultraThinMaterial, in: Circle())
             }
+            .accessibilityLabel("Settings")
+            .accessibilityHint("Opens app settings")
         }
         .padding(.horizontal, 4)
         .padding(.top, 8)
@@ -180,6 +196,9 @@ struct DashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Calories today")
+            .accessibilityValue("\(todayTotals.calories.calorieString) of \((goal?.calorieTarget ?? 2000).calorieString) kilocalories, \(Int(todayTotals.calories.progressRatio(of: goal?.calorieTarget ?? 2000) * 100)) percent")
 
             // Macro bar underneath
             HStack(spacing: 0) {
@@ -227,6 +246,7 @@ struct DashboardView: View {
         Rectangle()
             .fill(.quaternary)
             .frame(width: 1, height: 32)
+            .accessibilityHidden(true)
     }
 
     private func macroStat(title: String, value: Double, target: Double, color: Color) -> some View {
@@ -258,37 +278,60 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue("\(value.oneDecimalString) of \(target.oneDecimalString) grams, \(Int(min(value / max(target, 1), 1.0) * 100)) percent")
     }
 
-    // MARK: - Full-width Scan Meal Button
+    // MARK: - Scan + Search Buttons
 
-    private var scanMealButton: some View {
-        Button {
-            HapticService.scanStarted()
-            showScanSheet = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "viewfinder.circle.fill")
-                    .font(.system(size: 22, weight: .semibold))
-                Text("Scan Meal")
-                    .font(.callout.weight(.bold))
+    private var scanAndSearchButtons: some View {
+        HStack(spacing: 10) {
+            // Scan Meal (primary)
+            Button {
+                HapticService.scanStarted()
+                showScanSheet = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "viewfinder.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                    Text("Scan Meal")
+                        .font(.callout.weight(.bold))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.28, green: 0.72, blue: 0.40),
+                            Color(red: 0.18, green: 0.55, blue: 0.30)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    in: RoundedRectangle(cornerRadius: 14)
+                )
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.28, green: 0.72, blue: 0.40),
-                        Color(red: 0.18, green: 0.55, blue: 0.30)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ),
-                in: RoundedRectangle(cornerRadius: 14)
-            )
+            .buttonStyle(.plain)
+            .accessibilityLabel("Scan Meal")
+            .accessibilityHint("Opens camera to photograph and analyze a meal")
+
+            // Search Food (secondary)
+            Button {
+                HapticService.buttonTap()
+                showFoodSearch = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.nutriGreen)
+                    .frame(width: 52, height: 52)
+                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Search Food")
+            .accessibilityHint("Search for food items by name to log manually")
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Today's Meals
@@ -312,6 +355,7 @@ struct DashboardView: View {
                     Image(systemName: "fork.knife.circle")
                         .font(.system(size: 40))
                         .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
                     Text("No meals logged yet")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -322,6 +366,7 @@ struct DashboardView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .accessibilityElement(children: .combine)
             } else {
                 ForEach(todaysMeals) { meal in
                     MealRowCard(meal: meal, onDelete: {
@@ -366,6 +411,7 @@ struct DashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Smart Insights Link
@@ -400,6 +446,8 @@ struct DashboardView: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("View patterns, alerts and suggestions")
     }
 
     // MARK: - Weekly Report Link
@@ -434,6 +482,80 @@ struct DashboardView: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("View your nutrition trends")
+    }
+
+    // MARK: - Interactive Charts Link
+
+    private var interactiveChartsLink: some View {
+        NavigationLink {
+            InteractiveChartsView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(.body)
+                    .foregroundStyle(.nutriOrange)
+                    .frame(width: 36, height: 36)
+                    .background(.nutriOrange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Charts")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("Interactive nutrition charts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Interactive nutrition charts")
+    }
+
+    // MARK: - Trends Link
+
+    private var trendsLink: some View {
+        NavigationLink {
+            TrendsView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.body)
+                    .foregroundStyle(.nutriBlue)
+                    .frame(width: 36, height: 36)
+                    .background(.nutriBlue.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Trends")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("Monthly & yearly overview")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Monthly and yearly overview")
     }
 
     private func deleteMeal(_ meal: Meal) {
@@ -466,6 +588,7 @@ struct MealRowCard: View {
                     .frame(maxHeight: .infinity)
             }
             .background(.red, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel("Delete \(meal.name)")
 
             // Main row content
             NavigationLink(destination: MealDetailView(meal: meal)) {
@@ -505,6 +628,11 @@ struct MealRowCard: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(meal.name), \(meal.timestamp.shortTimeString)")
+            .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams")
+            .accessibilityHint("Opens meal details")
+            .accessibilityAddTraits(.isButton)
             .offset(x: offset)
             .highPriorityGesture(
                 DragGesture(minimumDistance: 30, coordinateSpace: .local)

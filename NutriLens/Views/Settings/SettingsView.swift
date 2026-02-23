@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Environment(TrialManager.self) private var trialManager
     @Environment(HealthKitManager.self) private var healthKitManager
     @Environment(ScanCounter.self) private var scanCounter
+    @Environment(MealReminderManager.self) private var mealReminderManager
 
     @AppStorage("nutrilens.appearance.mode") private var appearanceMode: String = AppearanceMode.system.rawValue
     @State private var showPaywall = false
@@ -30,6 +31,7 @@ struct SettingsView: View {
             appearanceSection
             dailyGoalsSection
             profileSection
+            mealRemindersSection
             exportSection
             achievementsSection
             referralsSection
@@ -81,6 +83,8 @@ struct SettingsView: View {
                     .padding(.vertical, 3)
                     .background(statusColor.opacity(0.15), in: Capsule())
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Subscription status: \(statusLabel), \(statusBadge)")
 
             // Scan count for Standard tier
             if subscriptionManager.currentTier == .standard && !OwnerBypass.isOwnerDevice {
@@ -91,6 +95,7 @@ struct SettingsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .combine)
 
                 Button {
                     Task { await subscriptionManager.loadProducts() }
@@ -111,6 +116,7 @@ struct SettingsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .accessibilityElement(children: .combine)
                 }
 
                 Button {
@@ -214,6 +220,7 @@ struct SettingsView: View {
     private func goalRow(_ name: String, value: Double, unit: String, color: Color) -> some View {
         HStack {
             Circle().fill(color).frame(width: 8, height: 8)
+                .accessibilityHidden(true)
             Text(name)
                 .font(.subheadline)
             Spacer()
@@ -221,6 +228,8 @@ struct SettingsView: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(name): \(value.oneDecimalString) \(unit)")
     }
 
     // MARK: - Profile
@@ -239,9 +248,32 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityHint("Edit your body profile")
             } else {
                 ProgressView()
             }
+        }
+    }
+
+    // MARK: - Meal Reminders
+
+    private var mealRemindersSection: some View {
+        Section("Notifications") {
+            NavigationLink {
+                MealReminderSettingsView()
+            } label: {
+                HStack {
+                    Label("Meal Reminders", systemImage: "bell.badge.fill")
+                    Spacer()
+                    Text(mealReminderManager.isEnabled ? "On" : "Off")
+                        .font(.caption)
+                        .foregroundStyle(mealReminderManager.isEnabled ? .nutriGreen : .secondary)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(mealReminderManager.isEnabled ? "On" : "Off")
+            .accessibilityHint("Configure meal reminder notifications")
         }
     }
 
@@ -290,6 +322,9 @@ struct SettingsView: View {
                         .foregroundStyle(healthKitManager.isAuthorized ? .nutriGreen : .secondary)
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(healthKitManager.isAuthorized ? "Connected" : "Off")
+            .accessibilityHint("Configure Apple Health integration")
         }
     }
 
@@ -314,6 +349,7 @@ struct SettingsView: View {
             } label: {
                 Label("Refer a Friend", systemImage: "person.2.fill")
             }
+            .accessibilityHint("Opens share sheet with a referral link")
         }
     }
 
@@ -346,6 +382,7 @@ struct SettingsView: View {
             } label: {
                 Label("Rate on App Store", systemImage: "star.fill")
             }
+            .accessibilityHint("Opens the App Store to leave a review")
         }
     }
 
@@ -371,6 +408,7 @@ struct SettingsView: View {
             } label: {
                 Label("Restart Onboarding", systemImage: "arrow.counterclockwise")
             }
+            .accessibilityHint("Resets and shows the onboarding tutorial again")
         }
     }
 
@@ -402,4 +440,5 @@ struct SettingsView: View {
         .environment(TrialManager())
         .environment(HealthKitManager())
         .environment(ScanCounter())
+        .environment(MealReminderManager())
 }

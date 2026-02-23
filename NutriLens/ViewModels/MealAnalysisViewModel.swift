@@ -90,6 +90,26 @@ final class MealAnalysisViewModel {
         }
     }
 
+    func analyzePhotos(_ images: [UIImage]) async {
+        guard !images.isEmpty else { return }
+        // Use the first image as the representative thumbnail
+        capturedImage = images.first
+        analysisState = .analyzing
+
+        do {
+            let response = try await visionService.analyzeMealPhotos(images)
+            mealName = response.mealName
+            confidenceScore = response.confidence
+            dietaryFlags = response.dietaryFlags ?? []
+            foodItems = response.items.map { EditableFoodItem(from: $0) }
+            mealType = .suggestedForCurrentTime
+            analysisState = .success
+        } catch {
+            analysisState = .error(error.localizedDescription)
+            HapticService.errorOccurred()
+        }
+    }
+
     func addEmptyItem() {
         foodItems.append(EditableFoodItem())
     }

@@ -33,6 +33,15 @@ final class ClaudeVisionService {
         return try parseJSON(responseText)
     }
 
+    func analyzeMealPhotos(_ images: [UIImage]) async throws -> MealAnalysisResponse {
+        guard !images.isEmpty else { throw NutriLensError.imageProcessingFailed }
+        if images.count == 1 {
+            return try await analyzeMealPhoto(images[0])
+        }
+        let responseText = try await sendMultiImageAnalysisRequest(images: images, type: "meal")
+        return try parseJSON(responseText)
+    }
+
     func analyzeNutritionLabel(_ image: UIImage) async throws -> LabelAnalysisResponse {
         let responseText = try await sendAnalysisRequest(image: image, type: "label")
         return try parseJSON(responseText)
@@ -84,6 +93,63 @@ final class ClaudeVisionService {
         }
 
         // The Worker returns the Anthropic response as-is, so parse the same way
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = json["content"] as? [[String: Any]],
+              let firstBlock = content.first,
+              let text = firstBlock["text"] as? String else {
+            throw NutriLensError.unexpectedResponse
+        }
+
+        return text
+    }
+
+    private func sendMultiImageAnalysisRequest(images: [UIImage], type: String) async throws -> String {
+        // Prepare all images on background threads
+        let preparedImages: [(base64: String, mediaType: String)] = try await Task.detached {
+            var results: [(base64: String, mediaType: String)] = []
+            for image in images {
+                guard let result = ImageProcessor.prepareForAPI(image) else {
+                    throw NutriLensError.imageProcessingFailed
+                }
+                results.append(result)
+            }
+            return results
+        }.value
+
+        var request = URLRequest(url: analyzeURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
+        request.timeoutInterval = 90 // longer timeout for multiple images
+
+        // Build JSON body with images array
+        var imagesJSON: [[String: String]] = []
+        for prepared in preparedImages {
+            imagesJSON.append(["image": prepared.base64, "mediaType": prepared.mediaType])
+        }
+
+        let body: [String: Any] = [
+            "type": type,
+            "images": imagesJSON
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw NutriLensError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NutriLensError.unexpectedResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
+        }
+
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let content = json["content"] as? [[String: Any]],
               let firstBlock = content.first,

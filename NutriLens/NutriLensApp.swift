@@ -8,6 +8,7 @@ struct NutriLensApp: App {
     @State private var trialManager = TrialManager()
     @State private var healthKitManager = HealthKitManager()
     @State private var scanCounter = ScanCounter()
+    @State private var mealReminderManager = MealReminderManager()
 
     let modelContainer: ModelContainer
 
@@ -49,6 +50,7 @@ struct NutriLensApp: App {
                 .environment(trialManager)
                 .environment(healthKitManager)
                 .environment(scanCounter)
+                .environment(mealReminderManager)
         }
         .modelContainer(modelContainer)
     }

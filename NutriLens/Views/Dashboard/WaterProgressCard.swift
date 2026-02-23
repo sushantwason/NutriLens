@@ -58,6 +58,9 @@ struct WaterProgressCard: View {
 
                 Spacer()
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Water today")
+            .accessibilityValue("\(todaysWaterML.mlString) of \(waterTarget.mlString) milliliters, \(Int(todaysWaterML.progressRatio(of: waterTarget) * 100)) percent\(todaysWaterML >= waterTarget ? ", goal reached" : "")")
 
             // Quick-add buttons
             HStack(spacing: 8) {
@@ -78,6 +81,8 @@ struct WaterProgressCard: View {
                     .background(.waterColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                     .foregroundStyle(.waterColor)
                 }
+                .accessibilityLabel("Add custom amount of water")
+                .accessibilityHint("Opens a sheet to enter a custom water amount")
             }
         }
         .padding()
@@ -102,6 +107,8 @@ struct WaterProgressCard: View {
             .background(.waterColor.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
             .foregroundStyle(.waterColor)
         }
+        .accessibilityLabel("Add \(label) of water")
+        .accessibilityHint("Logs \(label) of water intake")
     }
 
     private var customWaterSheet: some View {

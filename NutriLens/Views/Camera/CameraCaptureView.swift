@@ -37,6 +37,7 @@ struct CameraCaptureView: View {
 
     @State private var isBarcodeScanning = false
     @State private var showScanLimitAlert = false
+    @State private var capturedImages: [UIImage] = []  // Multi-photo capture for meal mode
 
     var body: some View {
         NavigationStack {
@@ -97,6 +98,8 @@ struct CameraCaptureView: View {
         ZStack {
             CameraPreviewRepresentable(session: cameraService.session)
                 .ignoresSafeArea()
+                .accessibilityLabel("Camera preview")
+                .accessibilityAddTraits(.isImage)
 
             VStack {
                 // Mode picker
@@ -122,8 +125,12 @@ struct CameraCaptureView: View {
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
-                    capturedImage = image
-                    await attemptScan(with: image)
+                    if scanMode == .meal {
+                        capturedImages.append(image)
+                    } else {
+                        capturedImage = image
+                        await attemptScan(with: image)
+                    }
                 }
             }
         }
@@ -131,6 +138,9 @@ struct CameraCaptureView: View {
             if oldValue == .barcode {
                 cameraService.stopBarcodeScanning()
                 isBarcodeScanning = false
+            }
+            if oldValue == .meal {
+                capturedImages.removeAll()
             }
             if newValue == .barcode {
                 startBarcodeScan()
@@ -163,6 +173,8 @@ struct CameraCaptureView: View {
             .padding(.vertical, 8)
             .background(.ultraThinMaterial, in: Capsule())
         }
+        .accessibilityLabel("Scan mode: \(scanMode.rawValue)")
+        .accessibilityHint("Double tap to change scan mode")
     }
 
     // MARK: - Barcode Overlay
@@ -185,6 +197,7 @@ struct CameraCaptureView: View {
                             .background(.ultraThinMaterial, in: Capsule())
                     }
                 }
+                .accessibilityHidden(true)
 
             Spacer()
 
@@ -196,45 +209,129 @@ struct CameraCaptureView: View {
                 .background(.ultraThinMaterial, in: Capsule())
                 .padding(.bottom, 30)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(isBarcodeScanning ? "Scanning for barcode" : "Point camera at a barcode")
+        .accessibilityAddTraits(.updatesFrequently)
     }
 
     // MARK: - Capture Controls
 
     private var captureControls: some View {
-        HStack(spacing: 40) {
-            // Photo library picker
-            PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                Image(systemName: "photo.on.rectangle")
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .frame(width: 50, height: 50)
-                    .background(.ultraThinMaterial, in: Circle())
+        VStack(spacing: 12) {
+            // Multi-photo thumbnail strip (meal mode only)
+            if scanMode == .meal && !capturedImages.isEmpty {
+                capturedPhotosStrip
             }
 
-            // Capture button
-            Button {
-                Task {
-                    if let image = await cameraService.capturePhoto() {
-                        capturedImage = image
-                        await attemptScan(with: image)
+            HStack(spacing: 40) {
+                // Photo library picker
+                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(width: 50, height: 50)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .accessibilityLabel("Choose photo from library")
+                .accessibilityHint("Opens photo library to select an image for analysis")
+
+                // Capture button
+                Button {
+                    Task {
+                        if let image = await cameraService.capturePhoto() {
+                            if scanMode == .meal {
+                                capturedImages.append(image)
+                            } else {
+                                capturedImage = image
+                                await attemptScan(with: image)
+                            }
+                        }
+                    }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 72, height: 72)
+                        Circle()
+                            .stroke(.white, lineWidth: 4)
+                            .frame(width: 80, height: 80)
                     }
                 }
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(.white)
-                        .frame(width: 72, height: 72)
-                    Circle()
-                        .stroke(.white, lineWidth: 4)
-                        .frame(width: 80, height: 80)
+                .accessibilityLabel("Take photo")
+                .accessibilityHint("Captures a photo of your \(scanMode.rawValue.lowercased())")
+
+                // Analyze All button (meal mode with photos) or spacer
+                if scanMode == .meal && !capturedImages.isEmpty {
+                    Button {
+                        Task { await analyzeAllMealPhotos() }
+                    } label: {
+                        VStack(spacing: 2) {
+                            Image(systemName: "sparkles")
+                                .font(.title3)
+                            Text("Analyze")
+                                .font(.caption2.weight(.semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(width: 50, height: 50)
+                        .background(.green.gradient, in: Circle())
+                    }
+                    .accessibilityLabel("Analyze \(capturedImages.count) \(capturedImages.count == 1 ? "photo" : "photos")")
+                    .accessibilityHint("Sends captured photos for nutritional analysis")
+                } else {
+                    Color.clear
+                        .frame(width: 50, height: 50)
                 }
             }
-
-            // Spacer for symmetry
-            Color.clear
-                .frame(width: 50, height: 50)
+            .padding(.bottom, 30)
         }
-        .padding(.bottom, 30)
+    }
+
+    // MARK: - Captured Photos Strip
+
+    private var capturedPhotosStrip: some View {
+        VStack(spacing: 6) {
+            Text("\(capturedImages.count) photo\(capturedImages.count == 1 ? "" : "s") captured")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.white)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(Array(capturedImages.enumerated()), id: \.offset) { index, image in
+                        ZStack(alignment: .topTrailing) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 56, height: 56)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(.white.opacity(0.5), lineWidth: 1)
+                                )
+                                .accessibilityLabel("Captured photo \(index + 1)")
+
+                            // Remove button
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    let idx: Int = index
+                                    capturedImages.remove(at: idx)
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.caption)
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, .red)
+                            }
+                            .offset(x: 4, y: -4)
+                            .accessibilityLabel("Remove photo \(index + 1)")
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Status Badge
@@ -268,6 +365,7 @@ struct CameraCaptureView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(.ultraThinMaterial, in: Capsule())
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Permission View
@@ -288,6 +386,7 @@ struct CameraCaptureView: View {
                     UIApplication.shared.open(url)
                 }
             }
+            .accessibilityHint("Opens device settings to grant camera permission")
         }
     }
 
@@ -345,6 +444,47 @@ struct CameraCaptureView: View {
             showAnalysis = true
             await recipeAnalysisVM.analyzeRecipe(image)
         }
+    }
+
+    private func analyzeAllMealPhotos() async {
+        guard !capturedImages.isEmpty else { return }
+        await attemptMealScan(with: capturedImages)
+    }
+
+    /// Scan-gating for multi-image meal analysis (mirrors attemptScan but for [UIImage])
+    private func attemptMealScan(with images: [UIImage]) async {
+        if trialManager.isTrialActive {
+            await analyzeMealImages(images)
+            return
+        }
+
+        if OwnerBypass.isOwnerDevice {
+            await analyzeMealImages(images)
+            return
+        }
+
+        switch subscriptionManager.currentTier {
+        case .unlimited:
+            await analyzeMealImages(images)
+        case .standard:
+            if scanCounter.canScan(tier: .standard) {
+                scanCounter.recordScan()
+                await analyzeMealImages(images)
+            } else {
+                showScanLimitAlert = true
+            }
+        case .none:
+            if subscriptionManager.products.isEmpty {
+                await subscriptionManager.loadProducts()
+            }
+            showPaywall = true
+        }
+    }
+
+    private func analyzeMealImages(_ images: [UIImage]) async {
+        mealAnalysisVM.reset()
+        showAnalysis = true
+        await mealAnalysisVM.analyzePhotos(images)
     }
 
     // MARK: - Barcode Scanning

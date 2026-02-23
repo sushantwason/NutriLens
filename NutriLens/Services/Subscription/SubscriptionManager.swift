@@ -26,12 +26,16 @@ final class SubscriptionManager {
 
     static let standardMonthlyProductID = "com.nutrilensapp.app.standard.monthly"
     static let unlimitedMonthlyProductID = "com.nutrilensapp.app.unlimited.monthly"
+    static let standardAnnualProductID = "com.nutrilensapp.app.standard.annual"
+    static let unlimitedAnnualProductID = "com.nutrilensapp.app.unlimited.annual"
 
     // Legacy product ID for migration
     static let legacyProMonthlyProductID = "com.nutrilens.app.pro.monthly"
 
     private static var allProductIDs: Set<String> {
-        [standardMonthlyProductID, unlimitedMonthlyProductID, legacyProMonthlyProductID]
+        [standardMonthlyProductID, unlimitedMonthlyProductID,
+         standardAnnualProductID, unlimitedAnnualProductID,
+         legacyProMonthlyProductID]
     }
 
     // MARK: - Private
@@ -132,10 +136,10 @@ final class SubscriptionManager {
         for await result in Transaction.currentEntitlements {
             if let transaction = try? checkVerified(result) {
                 switch transaction.productID {
-                case Self.unlimitedMonthlyProductID:
+                case Self.unlimitedMonthlyProductID, Self.unlimitedAnnualProductID:
                     detectedTier = .unlimited
                     latestExpiration = transaction.expirationDate
-                case Self.standardMonthlyProductID:
+                case Self.standardMonthlyProductID, Self.standardAnnualProductID:
                     // Only set standard if we haven't found unlimited
                     if detectedTier != .unlimited {
                         detectedTier = .standard
@@ -163,6 +167,18 @@ final class SubscriptionManager {
 
     var unlimitedProduct: Product? {
         products.first { $0.id == Self.unlimitedMonthlyProductID }
+    }
+
+    var standardAnnualProduct: Product? {
+        products.first { $0.id == Self.standardAnnualProductID }
+    }
+
+    var unlimitedAnnualProduct: Product? {
+        products.first { $0.id == Self.unlimitedAnnualProductID }
+    }
+
+    func purchase(product: Product) async {
+        await purchase(productID: product.id)
     }
 
     // MARK: - Transaction Listener

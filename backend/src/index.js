@@ -142,11 +142,25 @@ function corsHeaders() {
 }
 
 async function handleAnalyze(body, env) {
-  const { type, image, mediaType } = body;
+  const { type, image, mediaType, images } = body;
 
-  if (!type || !image || !mediaType) {
+  // Support both single image (image/mediaType) and multi-image (images array)
+  let imageEntries = [];
+  if (images && Array.isArray(images) && images.length > 0) {
+    for (const img of images) {
+      if (!img.image || !img.mediaType) {
+        return Response.json(
+          { error: "Each entry in images must have image and mediaType" },
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+      imageEntries.push({ image: img.image, mediaType: img.mediaType });
+    }
+  } else if (image && mediaType) {
+    imageEntries.push({ image, mediaType });
+  } else {
     return Response.json(
-      { error: "Missing required fields: type, image, mediaType" },
+      { error: "Missing required fields: provide (image, mediaType) or images array" },
       { status: 400, headers: corsHeaders() }
     );
   }
@@ -159,6 +173,20 @@ async function handleAnalyze(body, env) {
     );
   }
 
+  // Build content blocks: one image block per photo, then the text prompt
+  const contentBlocks = imageEntries.map((entry) => ({
+    type: "image",
+    source: {
+      type: "base64",
+      media_type: entry.mediaType,
+      data: entry.image,
+    },
+  }));
+  contentBlocks.push({
+    type: "text",
+    text: prompt.user,
+  });
+
   const anthropicBody = {
     model: MODEL,
     max_tokens: 2048,
@@ -166,20 +194,7 @@ async function handleAnalyze(body, env) {
     messages: [
       {
         role: "user",
-        content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: mediaType,
-              data: image,
-            },
-          },
-          {
-            type: "text",
-            text: prompt.user,
-          },
-        ],
+        content: contentBlocks,
       },
     ],
   };
