@@ -449,7 +449,7 @@ struct SettingsView: View {
     private var aboutSection: some View {
         Section("About") {
             LabeledContent("Version", value: "1.0 (6)")
-            LabeledContent("AI Model", value: "Claude Sonnet")
+            LabeledContent("AI Model", value: "Claude Haiku")
 
             NavigationLink {
                 DisclaimersView()
