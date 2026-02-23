@@ -33,7 +33,6 @@ struct SettingsView: View {
             profileSection
             dietaryRestrictionsSection
             mealRemindersSection
-            exportSection
             achievementsSection
             referralsSection
             feedbackSection
@@ -314,24 +313,6 @@ struct SettingsView: View {
                 WeightLogView()
             } label: {
                 Label("Weight Log", systemImage: "scalemass.fill")
-            }
-        }
-    }
-
-    // MARK: - Export
-
-    private var exportSection: some View {
-        Section("Data") {
-            NavigationLink {
-                WeeklyReportView()
-            } label: {
-                Label("Weekly Report", systemImage: "chart.bar.doc.horizontal")
-            }
-
-            NavigationLink {
-                ExportView()
-            } label: {
-                Label("Export Data", systemImage: "square.and.arrow.up")
             }
         }
     }
