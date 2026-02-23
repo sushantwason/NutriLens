@@ -261,31 +261,28 @@ struct SettingsView: View {
 
     private var dietaryRestrictionsSection: some View {
         Section("Dietary Restrictions") {
-            if let profile = profiles.first ?? localProfile {
-                let restrictions = profile.dietaryRestrictions
-                NavigationLink {
+            NavigationLink {
+                if let profile = profiles.first ?? localProfile {
                     DietaryRestrictionsEditorView(profile: profile)
-                } label: {
-                    HStack {
-                        Label("Restrictions", systemImage: "leaf.fill")
-                        Spacer()
-                        if restrictions.isEmpty {
-                            Text("None")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text(restrictions.map(\.displayName).joined(separator: ", "))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityValue(restrictions.isEmpty ? "None set" : restrictions.map(\.displayName).joined(separator: ", "))
-                .accessibilityHint("Edit your dietary restrictions for alerts and AI suggestions")
+            } label: {
+                HStack {
+                    Label("Restrictions", systemImage: "leaf.fill")
+                    Spacer()
+                    Text(restrictionsSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Edit your dietary restrictions for alerts and AI suggestions")
         }
+    }
+
+    private var restrictionsSummary: String {
+        let restrictions = (profiles.first ?? localProfile)?.dietaryRestrictions ?? []
+        return restrictions.isEmpty ? "None" : restrictions.map(\.displayName).joined(separator: ", ")
     }
 
     // MARK: - Meal Reminders
