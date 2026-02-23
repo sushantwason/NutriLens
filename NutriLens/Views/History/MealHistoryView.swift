@@ -63,9 +63,18 @@ struct MealHistoryView: View {
         List {
             // Favorites section
             if !favoriteMeals.isEmpty && searchText.isEmpty {
-                Section("Favorites") {
-                    ForEach(favoriteMeals) { meal in
-                        mealRow(meal)
+                Section {
+                    favoritesSection
+                } header: {
+                    HStack {
+                        Text("Favorites")
+                        Spacer()
+                        Text("\(favoriteMeals.count)")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(.quaternary, in: Capsule())
                     }
                 }
             }
@@ -80,6 +89,46 @@ struct MealHistoryView: View {
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    private var favoritesSection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 12) {
+                ForEach(favoriteMeals) { meal in
+                    FavoriteCardView(meal: meal, onRelog: {
+                        relogMeal(meal)
+                    })
+                    .contextMenu {
+                        Button {
+                            relogMeal(meal)
+                        } label: {
+                            Label("One More", systemImage: "plus.circle")
+                        }
+
+                        Button {
+                            meal.isFavorite = false
+                            try? modelContext.save()
+                        } label: {
+                            Label("Unfavorite", systemImage: "heart.slash")
+                        }
+
+                        Divider()
+
+                        Button(role: .destructive) {
+                            HapticService.mealDeleted()
+                            modelContext.delete(meal)
+                            try? modelContext.save()
+                            WidgetCenter.shared.reloadAllTimelines()
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 4)
+        }
+        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
     }
 
     private func mealRow(_ meal: Meal) -> some View {
@@ -204,6 +253,73 @@ struct MealHistoryRow: View {
                 .foregroundStyle(.calorieColor)
         }
         .padding(.vertical, 2)
+    }
+}
+
+struct FavoriteCardView: View {
+    let meal: Meal
+    var onRelog: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                if let photoData = meal.photoData,
+                   let uiImage = UIImage(data: photoData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    Image(systemName: meal.mealType.icon)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.nutriGreen)
+                        .frame(width: 36, height: 36)
+                        .background(.nutriGreen.opacity(0.15),
+                                    in: RoundedRectangle(cornerRadius: 8))
+                }
+
+                Spacer()
+
+                Button {
+                    onRelog()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.nutriGreen)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Log \(meal.name) again")
+            }
+
+            Text(meal.name)
+                .font(.subheadline.weight(.medium))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("\(meal.totalCalories.calorieString) kcal")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.calorieColor)
+
+            HStack(spacing: 6) {
+                macroLabel("P", meal.totalProteinGrams, .proteinColor)
+                macroLabel("C", meal.totalCarbsGrams, .carbsColor)
+                macroLabel("F", meal.totalFatGrams, .fatColor)
+            }
+        }
+        .padding(12)
+        .frame(width: 140)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(meal.name), \(meal.totalCalories.calorieString) kilocalories")
+        .accessibilityHint("Long press for options, or tap plus to log again")
+    }
+
+    private func macroLabel(_ letter: String, _ value: Double, _ color: Color) -> some View {
+        Text("\(letter):\(value.oneDecimalString)")
+            .font(.system(size: 9, weight: .medium, design: .rounded))
+            .foregroundStyle(color)
     }
 }
 
