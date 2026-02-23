@@ -7,8 +7,6 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SubscriptionManager.self) private var subscriptionManager
     @Environment(TrialManager.self) private var trialManager
-    @Environment(HealthKitManager.self) private var healthKitManager
-    @Environment(ScanCounter.self) private var scanCounter
     @Environment(MealReminderManager.self) private var mealReminderManager
 
     @AppStorage("nutrilens.appearance.mode") private var appearanceMode: String = AppearanceMode.system.rawValue
@@ -31,8 +29,8 @@ struct SettingsView: View {
             appearanceSection
             dailyGoalsSection
             profileSection
+            dietaryRestrictionsSection
             mealRemindersSection
-            exportSection
             achievementsSection
             referralsSection
             feedbackSection
@@ -85,25 +83,6 @@ struct SettingsView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Subscription status: \(statusLabel), \(statusBadge)")
-
-            // Scan count for Standard tier
-            if subscriptionManager.currentTier == .standard && !OwnerBypass.isOwnerDevice {
-                HStack {
-                    Image(systemName: "camera.fill")
-                        .foregroundStyle(.secondary)
-                    Text("\(scanCounter.monthlyCount) / \(ScanCounter.standardMonthlyLimit) scans used this month")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .accessibilityElement(children: .combine)
-
-                Button {
-                    Task { await subscriptionManager.loadProducts() }
-                    showPaywall = true
-                } label: {
-                    Label("Upgrade to Unlimited", systemImage: "sparkles")
-                }
-            }
 
             // Trial countdown
             if !subscriptionManager.isProUser && !OwnerBypass.isOwnerDevice {
@@ -162,22 +141,14 @@ struct SettingsView: View {
 
     private var statusLabel: String {
         if OwnerBypass.isOwnerDevice { return "MealSight Pro" }
-        switch subscriptionManager.currentTier {
-        case .unlimited: return "MealSight Unlimited"
-        case .standard: return "MealSight Standard"
-        case .none: break
-        }
+        if subscriptionManager.isProUser { return "MealSight Pro" }
         if trialManager.isTrialActive { return "Free Trial" }
         return "Trial Expired"
     }
 
     private var statusBadge: String {
         if OwnerBypass.isOwnerDevice { return "Owner" }
-        switch subscriptionManager.currentTier {
-        case .unlimited: return "Unlimited"
-        case .standard: return "Standard"
-        case .none: break
-        }
+        if subscriptionManager.isProUser { return "Pro" }
         if trialManager.isTrialActive { return "Trial" }
         return "Expired"
     }
@@ -256,6 +227,34 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Dietary Restrictions
+
+    private var dietaryRestrictionsSection: some View {
+        Section("Dietary Restrictions") {
+            NavigationLink {
+                if let profile = profiles.first ?? localProfile {
+                    DietaryRestrictionsEditorView(profile: profile)
+                }
+            } label: {
+                HStack {
+                    Label("Restrictions", systemImage: "leaf.fill")
+                    Spacer()
+                    Text(restrictionsSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityHint("Edit your dietary restrictions for alerts and AI suggestions")
+        }
+    }
+
+    private var restrictionsSummary: String {
+        let restrictions = (profiles.first ?? localProfile)?.dietaryRestrictions ?? []
+        return restrictions.isEmpty ? "None" : restrictions.map(\.displayName).joined(separator: ", ")
+    }
+
     // MARK: - Meal Reminders
 
     private var mealRemindersSection: some View {
@@ -274,57 +273,6 @@ struct SettingsView: View {
             .accessibilityElement(children: .combine)
             .accessibilityValue(mealReminderManager.isEnabled ? "On" : "Off")
             .accessibilityHint("Configure meal reminder notifications")
-        }
-    }
-
-    // MARK: - Weight
-
-    private var weightSection: some View {
-        Section("Weight") {
-            NavigationLink {
-                WeightLogView()
-            } label: {
-                Label("Weight Log", systemImage: "scalemass.fill")
-            }
-        }
-    }
-
-    // MARK: - Export
-
-    private var exportSection: some View {
-        Section("Data") {
-            NavigationLink {
-                WeeklyReportView()
-            } label: {
-                Label("Weekly Report", systemImage: "chart.bar.doc.horizontal")
-            }
-
-            NavigationLink {
-                ExportView()
-            } label: {
-                Label("Export Data", systemImage: "square.and.arrow.up")
-            }
-        }
-    }
-
-    // MARK: - HealthKit
-
-    private var healthKitSection: some View {
-        Section("Apple Health") {
-            NavigationLink {
-                HealthKitSettingsView()
-            } label: {
-                HStack {
-                    Label("HealthKit Sync", systemImage: "heart.fill")
-                    Spacer()
-                    Text(healthKitManager.isAuthorized ? "Connected" : "Off")
-                        .font(.caption)
-                        .foregroundStyle(healthKitManager.isAuthorized ? .nutriGreen : .secondary)
-                }
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityValue(healthKitManager.isAuthorized ? "Connected" : "Off")
-            .accessibilityHint("Configure Apple Health integration")
         }
     }
 
@@ -417,7 +365,13 @@ struct SettingsView: View {
     private var aboutSection: some View {
         Section("About") {
             LabeledContent("Version", value: "1.0 (6)")
-            LabeledContent("AI Model", value: "Claude Sonnet")
+            LabeledContent("AI Model", value: "Claude Haiku")
+
+            NavigationLink {
+                DisclaimersView()
+            } label: {
+                Label("Disclaimers & Legal", systemImage: "doc.text")
+            }
         }
     }
 
@@ -438,7 +392,5 @@ struct SettingsView: View {
         .modelContainer(for: [DailyGoal.self, UserProfile.self, WeightEntry.self], inMemory: true)
         .environment(SubscriptionManager())
         .environment(TrialManager())
-        .environment(HealthKitManager())
-        .environment(ScanCounter())
         .environment(MealReminderManager())
 }

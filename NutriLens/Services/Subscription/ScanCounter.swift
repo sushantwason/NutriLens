@@ -7,10 +7,6 @@ final class ScanCounter {
     private(set) var monthlyCount: Int = 0
     private(set) var monthKey: String = ""
 
-    // MARK: - Constants
-
-    static let standardMonthlyLimit = 100
-
     // MARK: - Keys
 
     private static let monthKeyKey = "nutrilens.scans.monthKey"
@@ -36,19 +32,11 @@ final class ScanCounter {
     /// Whether the user can scan given their subscription tier.
     func canScan(tier: SubscriptionTier) -> Bool {
         switch tier {
-        case .unlimited:
+        case .pro:
             return true
-        case .standard:
-            loadCurrentMonth()
-            return monthlyCount < Self.standardMonthlyLimit
         case .none:
             return false
         }
-    }
-
-    /// Remaining scans for Standard tier.
-    var remainingScans: Int {
-        max(0, Self.standardMonthlyLimit - monthlyCount)
     }
 
     // MARK: - Private
@@ -58,15 +46,12 @@ final class ScanCounter {
         formatter.dateFormat = "yyyy-MM"
         let currentMonth = formatter.string(from: Date())
 
-        // First, load the persisted month key to see if we already have data
         let persistedMonthKey = UserDefaults.standard.string(forKey: Self.monthKeyKey) ?? ""
 
         if persistedMonthKey == currentMonth {
-            // Same month as persisted — load the saved count
             monthKey = currentMonth
             monthlyCount = UserDefaults.standard.integer(forKey: Self.countKey(for: currentMonth))
         } else {
-            // New month (or first launch) — reset counter
             monthKey = currentMonth
             monthlyCount = 0
             persist()

@@ -1,16 +1,30 @@
 import Foundation
 
+struct MealSuggestion {
+    let name: String
+    let description: String
+    let estimatedCalories: Int
+}
+
 struct CoachInsight {
     let message: String
     let emoji: String
     let tip: String
+    let mealSuggestion: MealSuggestion?
     let fetchedAt: Date
+}
+
+private struct CoachMealSuggestionResponse: Codable {
+    let name: String
+    let description: String
+    let estimatedCalories: Int?
 }
 
 private struct CoachResponse: Codable {
     let message: String
     let emoji: String
     let tip: String
+    let mealSuggestion: CoachMealSuggestionResponse?
 }
 
 @MainActor @Observable
@@ -108,10 +122,22 @@ final class NutritionCoachService {
                 return
             }
 
+            let suggestion: MealSuggestion?
+            if let s = coachResponse.mealSuggestion {
+                suggestion = MealSuggestion(
+                    name: s.name,
+                    description: s.description,
+                    estimatedCalories: s.estimatedCalories ?? 0
+                )
+            } else {
+                suggestion = nil
+            }
+
             latestInsight = CoachInsight(
                 message: coachResponse.message,
                 emoji: coachResponse.emoji,
                 tip: coachResponse.tip,
+                mealSuggestion: suggestion,
                 fetchedAt: Date()
             )
 

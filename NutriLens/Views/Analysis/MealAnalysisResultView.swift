@@ -137,12 +137,21 @@ struct MealAnalysisResultView: View {
                 }
             }
 
+            // Disclaimer
+            Section {
+                Text("Nutritional values are AI-generated estimates and may differ from actual content. Not medical advice.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
             // Feedback banner (shown after save)
             if viewModel.showFeedbackBanner {
                 Section {
                     AccuracyFeedbackBanner { rating in
                         viewModel.rateAccuracy(rating, context: modelContext)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 1_500_000_000)
+                            guard !Task.isCancelled else { return }
                             dismiss()
                         }
                     }

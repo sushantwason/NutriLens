@@ -18,6 +18,8 @@ struct DashboardView: View {
     @State private var coachService = NutritionCoachService()
     @State private var showScanSheet = false
     @State private var showFoodSearch = false
+    @State private var showAIConsent = false
+    @AppStorage("mealsight.ai.consent.accepted") private var aiConsentAccepted = false
 
     // Cached streak values to avoid expensive recalculation on every render
     @State private var cachedCurrentStreak: Int = 0
@@ -53,18 +55,12 @@ struct DashboardView: View {
                     // Today's meals
                     todayMealsSection
 
-                    // Water tracking
-                    WaterProgressCard()
-
                     // AI Coach
                     CoachInsightCard(
                         insight: coachService.latestInsight,
                         isLoading: coachService.isLoading,
                         onRefresh: { fetchCoachInsight() }
                     )
-
-                    // Micronutrients teaser
-                    micronutrientsCard
 
                     // Smart Insights link
                     smartInsightsLink
@@ -76,12 +72,30 @@ struct DashboardView: View {
                 .padding(.top, 8)
             }
             .background(Color(.systemGroupedBackground))
+            .refreshable {
+                requestScan()
+            }
             .navigationBarHidden(true)
             .fullScreenCover(isPresented: $showScanSheet) {
                 CameraCaptureView()
             }
             .sheet(isPresented: $showFoodSearch) {
                 TextFoodSearchView()
+            }
+            .sheet(isPresented: $showAIConsent) {
+                AIConsentView(
+                    onAccept: {
+                        aiConsentAccepted = true
+                        showAIConsent = false
+                        HapticService.scanStarted()
+                        showScanSheet = true
+                    },
+                    onDecline: {
+                        showAIConsent = false
+                    }
+                )
+                .presentationDetents([.large])
+                .interactiveDismissDisabled()
             }
             .task {
                 recalculateStreaks()
@@ -108,11 +122,16 @@ struct DashboardView: View {
 
     private var brandedHeaderCard: some View {
         HStack(spacing: 12) {
-            Image("AppLogo")
-                .resizable()
-                .scaledToFit()
+            RoundedRectangle(cornerRadius: 11, style: .continuous)
+                .fill(Color(red: 0.18, green: 0.52, blue: 0.28))
                 .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay {
+                    Image("AppLogo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
                 .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
                 .accessibilityHidden(true)
 
@@ -277,51 +296,34 @@ struct DashboardView: View {
     // MARK: - Scan + Search Buttons
 
     private var scanAndSearchButtons: some View {
-        HStack(spacing: 10) {
-            // Scan Meal (primary — premium feel)
+        HStack(spacing: 12) {
+            // Scan Meal (primary)
             Button {
-                HapticService.scanStarted()
-                showScanSheet = true
+                requestScan()
             } label: {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle()
-                            .fill(.white.opacity(0.2))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "viewfinder")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
+                VStack(spacing: 8) {
+                    Image(systemName: "camera.viewfinder")
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundStyle(.white)
 
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Scan Meal")
-                            .font(.callout.weight(.bold))
-                        Text("Photo, label, or recipe")
-                            .font(.system(size: 10, weight: .medium))
-                            .opacity(0.8)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.bold))
-                        .opacity(0.6)
+                    Text("Scan Meal")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
                 .background(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.22, green: 0.70, blue: 0.38),
-                            Color(red: 0.14, green: 0.50, blue: 0.26)
+                            Color(red: 0.24, green: 0.72, blue: 0.40),
+                            Color(red: 0.16, green: 0.52, blue: 0.28)
                         ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        startPoint: .top,
+                        endPoint: .bottom
                     ),
                     in: RoundedRectangle(cornerRadius: 16)
                 )
-                .shadow(color: Color(red: 0.18, green: 0.55, blue: 0.30).opacity(0.35), radius: 8, y: 4)
+                .shadow(color: Color(red: 0.18, green: 0.55, blue: 0.30).opacity(0.3), radius: 8, y: 4)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Scan Meal")
@@ -332,16 +334,18 @@ struct DashboardView: View {
                 HapticService.buttonTap()
                 showFoodSearch = true
             } label: {
-                VStack(spacing: 4) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .semibold))
+                VStack(spacing: 8) {
+                    Image(systemName: "text.magnifyingglass")
+                        .font(.system(size: 26, weight: .semibold))
                         .foregroundStyle(.nutriGreen)
+
                     Text("Search")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
                 }
-                .frame(width: 56, height: 56)
-                .background(.nutriGreen.opacity(0.10), in: RoundedRectangle(cornerRadius: 16))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Search Food")
@@ -386,6 +390,8 @@ struct DashboardView: View {
                 ForEach(todaysMeals) { meal in
                     MealRowCard(meal: meal, onDelete: {
                         deleteMeal(meal)
+                    }, onDuplicate: {
+                        duplicateMeal(meal)
                     })
                 }
             }
@@ -405,28 +411,6 @@ struct DashboardView: View {
                 restrictions: profiles.first?.dietaryRestrictions ?? []
             )
         }
-    }
-
-    // MARK: - Micronutrients Card
-
-    private var micronutrientsCard: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "leaf.fill")
-                .font(.title3)
-                .foregroundStyle(.nutriGreen)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Micronutrients")
-                    .font(.subheadline.weight(.semibold))
-                Text("Scan a meal to see micronutrient estimates")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Smart Insights Link
@@ -465,6 +449,15 @@ struct DashboardView: View {
         .accessibilityHint("View patterns, alerts and suggestions")
     }
 
+    private func requestScan() {
+        if aiConsentAccepted {
+            HapticService.scanStarted()
+            showScanSheet = true
+        } else {
+            showAIConsent = true
+        }
+    }
+
     private func deleteMeal(_ meal: Meal) {
         withAnimation {
             HapticService.mealDeleted()
@@ -473,34 +466,70 @@ struct DashboardView: View {
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
+
+    private func duplicateMeal(_ meal: Meal) {
+        withAnimation {
+            let copy = meal.relogCopy()
+            modelContext.insert(copy)
+            try? modelContext.save()
+            HapticService.mealSaved()
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
 }
 
 struct MealRowCard: View {
     let meal: Meal
     var onDelete: (() -> Void)?
+    var onDuplicate: (() -> Void)?
 
     @State private var offset: CGFloat = 0
-    private let deleteWidth: CGFloat = 70
+    private let actionWidth: CGFloat = 70
 
     var body: some View {
-        ZStack(alignment: .trailing) {
-            // Delete button (always present, revealed by swipe)
-            Button(role: .destructive) {
-                onDelete?()
-            } label: {
-                Image(systemName: "trash.fill")
-                    .font(.body.weight(.semibold))
+        ZStack {
+            // Leading action: One More (revealed by swipe right)
+            HStack(spacing: 0) {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0 }
+                    onDuplicate?()
+                } label: {
+                    VStack(spacing: 2) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.body.weight(.semibold))
+                        Text("One More")
+                            .font(.system(size: 9, weight: .medium))
+                    }
                     .foregroundStyle(.white)
-                    .frame(width: deleteWidth)
+                    .frame(width: actionWidth)
                     .frame(maxHeight: .infinity)
+                }
+                .background(.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
+                .accessibilityLabel("Log \(meal.name) again")
+
+                Spacer()
             }
-            .background(.red, in: RoundedRectangle(cornerRadius: 14))
-            .accessibilityLabel("Delete \(meal.name)")
+
+            // Trailing action: Delete (revealed by swipe left)
+            HStack(spacing: 0) {
+                Spacer()
+
+                Button(role: .destructive) {
+                    onDelete?()
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: actionWidth)
+                        .frame(maxHeight: .infinity)
+                }
+                .background(.red, in: RoundedRectangle(cornerRadius: 14))
+                .accessibilityLabel("Delete \(meal.name)")
+            }
 
             // Main row content
             NavigationLink(destination: MealDetailView(meal: meal)) {
                 HStack(spacing: 12) {
-                    // Meal type icon
                     Image(systemName: meal.mealType.icon)
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.nutriGreen)
@@ -544,24 +573,52 @@ struct MealRowCard: View {
             .highPriorityGesture(
                 DragGesture(minimumDistance: 30, coordinateSpace: .local)
                     .onChanged { value in
-                        // Only respond to horizontal swipes
                         guard abs(value.translation.width) > abs(value.translation.height) else { return }
                         if value.translation.width < 0 {
-                            offset = max(value.translation.width, -deleteWidth)
-                        } else if offset < 0 {
-                            offset = min(0, offset + value.translation.width)
+                            // Swipe left: reveal delete
+                            offset = max(value.translation.width, -actionWidth)
+                        } else if value.translation.width > 0 {
+                            // Swipe right: reveal duplicate
+                            offset = min(value.translation.width, actionWidth)
                         }
                     }
                     .onEnded { value in
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            if offset < -deleteWidth / 2 {
-                                offset = -deleteWidth
+                            if offset < -actionWidth / 2 {
+                                offset = -actionWidth
+                            } else if offset > actionWidth / 2 {
+                                offset = actionWidth
                             } else {
                                 offset = 0
                             }
                         }
                     }
             )
+            .contextMenu {
+                Button {
+                    onDuplicate?()
+                } label: {
+                    Label("One More", systemImage: "plus.circle")
+                }
+
+                Button {
+                    HapticService.buttonTap()
+                    meal.isFavorite.toggle()
+                } label: {
+                    Label(
+                        meal.isFavorite ? "Unfavorite" : "Favorite",
+                        systemImage: meal.isFavorite ? "heart.slash" : "heart"
+                    )
+                }
+
+                Divider()
+
+                Button(role: .destructive) {
+                    onDelete?()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
         }
         .clipShape(RoundedRectangle(cornerRadius: 14))
     }

@@ -9,6 +9,7 @@ struct TextFoodSearchView: View {
     @State private var searchText = ""
     @State private var selectedMealType: MealType = .suggestedForCurrentTime
     @State private var showConfirmation = false
+    @State private var selectedDetent: PresentationDetent = .medium
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,12 @@ struct TextFoodSearchView: View {
                 }
             }
             .animation(.easeInOut, value: showConfirmation)
+            .presentationDetents([.medium, .large], selection: $selectedDetent)
+            .onChange(of: searchService.searchResults) { _, newResults in
+                if !newResults.isEmpty {
+                    withAnimation { selectedDetent = .large }
+                }
+            }
         }
     }
 

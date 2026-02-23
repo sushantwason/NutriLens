@@ -12,8 +12,8 @@ settings:
     TARGETED_DEVICE_FAMILY: "1,2"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: MV279BP25N
-    INFOPLIST_KEY_NSCameraUsageDescription: "MealSight needs camera access to photograph your meals and nutrition labels for nutritional analysis."
-    INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "MealSight needs photo library access so you can select food photos for nutritional analysis."
+    INFOPLIST_KEY_NSCameraUsageDescription: "MealSight uses your camera to photograph meals and nutrition labels. Photos are sent to an AI service for nutritional analysis."
+    INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "MealSight uses your photo library so you can select food photos. Selected photos are sent to an AI service for nutritional analysis."
     INFOPLIST_KEY_NSHealthShareUsageDescription: "MealSight reads your weight from Apple Health to calculate BMI and track trends."
     INFOPLIST_KEY_NSHealthUpdateUsageDescription: "MealSight writes your nutrition and water intake to Apple Health."
 
@@ -40,7 +40,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: true
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "6"
+        CURRENT_PROJECT_VERSION: "7"
     dependencies:
       - target: NutriLensWidgetExtension
         embed: true
@@ -76,5 +76,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nutrilensapp.app.widget
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "6"
+        CURRENT_PROJECT_VERSION: "7"
         GENERATE_INFOPLIST_FILE: true

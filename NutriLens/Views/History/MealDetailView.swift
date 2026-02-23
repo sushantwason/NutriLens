@@ -4,7 +4,6 @@ import SwiftData
 struct MealDetailView: View {
     let meal: Meal
     @Environment(\.modelContext) private var modelContext
-    @State private var showRelogConfirmation = false
     @State private var showEditSheet = false
     @State private var editedName = ""
 
@@ -65,24 +64,8 @@ struct MealDetailView: View {
                         Image(systemName: meal.isFavorite ? "heart.fill" : "heart")
                             .foregroundStyle(meal.isFavorite ? .nutriRed : .secondary)
                     }
-
-                    Button {
-                        let copy = meal.relogCopy()
-                        modelContext.insert(copy)
-                        try? modelContext.save()
-                        HapticService.mealSaved()
-                        showRelogConfirmation = true
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(.nutriGreen)
-                    }
                 }
             }
-        }
-        .alert("Meal Logged", isPresented: $showRelogConfirmation) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("\(meal.name) has been logged again for today.")
         }
         .sheet(isPresented: $showEditSheet) {
             NavigationStack {

@@ -8,7 +8,6 @@ struct AchievementsView: View {
     @State private var uniqueDays: Int = 0
     @State private var currentStreak: Int = 0
     @State private var longestStreak: Int = 0
-    @State private var totalWaterEntries: Int = 0
     @State private var isLoading = true
 
     private var allMilestones: [MilestoneItem] {
@@ -28,7 +27,6 @@ struct AchievementsView: View {
             BadgeItem(icon: "bolt.fill", title: "Unstoppable", subtitle: "14-day logging streak", achieved: currentStreak >= 14, color: .calorieColor),
             BadgeItem(icon: "calendar.circle.fill", title: "Week Warrior", subtitle: "Log on 7 different days", achieved: uniqueDays >= 7, color: .nutriGreen),
             BadgeItem(icon: "calendar.badge.checkmark", title: "Monthly Champion", subtitle: "Log on 30 different days", achieved: uniqueDays >= 30, color: .nutriBlue),
-            BadgeItem(icon: "drop.fill", title: "Hydration Hero", subtitle: "Log water 10 times", achieved: totalWaterEntries >= 10, color: .nutriBlue),
             BadgeItem(icon: "trophy.fill", title: "Longest Streak", subtitle: "Reach a 30-day best streak", achieved: longestStreak >= 30, color: .nutriPurple),
         ]
     }
@@ -216,7 +214,6 @@ struct AchievementsView: View {
         let context = modelContext
         let meals: [Meal]
         let goals: [DailyGoal]
-        let waterCount: Int
         do {
             let mealDescriptor = FetchDescriptor<Meal>(
                 predicate: #Predicate<Meal> { $0.isConfirmedByUser == true }
@@ -227,9 +224,6 @@ struct AchievementsView: View {
                 predicate: #Predicate<DailyGoal> { $0.isActive == true }
             )
             goals = try context.fetch(goalDescriptor)
-
-            let waterDescriptor = FetchDescriptor<WaterEntry>()
-            waterCount = (try? context.fetchCount(waterDescriptor)) ?? 0
         } catch {
             isLoading = false
             return
@@ -252,7 +246,6 @@ struct AchievementsView: View {
             uniqueDays = days
             currentStreak = streak
             longestStreak = best
-            totalWaterEntries = waterCount
             isLoading = false
         }
     }
@@ -286,6 +279,6 @@ private struct BadgeItem: Identifiable {
 #Preview {
     NavigationStack {
         AchievementsView()
-            .modelContainer(for: [Meal.self, DailyGoal.self, WaterEntry.self], inMemory: true)
+            .modelContainer(for: [Meal.self, DailyGoal.self], inMemory: true)
     }
 }

@@ -32,7 +32,7 @@ struct NutritionTrackingView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     Picker("Time Range", selection: $timeRange) {
                         ForEach(TimeRange.allCases, id: \.self) { range in
                             Text(range.rawValue).tag(range)
@@ -42,13 +42,11 @@ struct NutritionTrackingView: View {
                     .padding(.horizontal)
 
                     calorieBarChart
-                    macroTrendChart
-                    macroPieChart
+                    macroSplitCard
                     if !filteredWeightEntries.isEmpty {
                         weightTrendChart
                     }
 
-                    // Deep-dive links
                     reportLinksSection
                 }
                 .padding()
@@ -78,32 +76,11 @@ struct NutritionTrackingView: View {
                 reportLinkRow(
                     icon: "chart.xyaxis.line",
                     color: .nutriOrange,
-                    title: "Interactive Charts",
-                    subtitle: "Tap and explore your nutrition data"
+                    title: "Detailed Charts",
+                    subtitle: "Macro breakdown and nutrient trends"
                 )
             }
 
-            NavigationLink {
-                TrendsView()
-            } label: {
-                reportLinkRow(
-                    icon: "chart.line.uptrend.xyaxis",
-                    color: .nutriBlue,
-                    title: "Trends",
-                    subtitle: "Weekly and monthly nutrition trends"
-                )
-            }
-
-            NavigationLink {
-                WeeklyReportView()
-            } label: {
-                reportLinkRow(
-                    icon: "chart.bar.doc.horizontal.fill",
-                    color: .nutriGreen,
-                    title: "Weekly Report",
-                    subtitle: "Detailed breakdown of your week"
-                )
-            }
         }
     }
 
@@ -137,8 +114,17 @@ struct NutritionTrackingView: View {
 
     private var calorieBarChart: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Daily Calories")
-                .font(.headline)
+            HStack {
+                Text("Daily Calories")
+                    .font(.headline)
+                Spacer()
+                if !summaries.isEmpty {
+                    let avg = summaries.reduce(0.0) { $0 + $1.totalCalories } / Double(max(summaries.count, 1))
+                    Text("Avg: \(Int(avg)) kcal")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             Chart(summaries) { summary in
                 BarMark(
@@ -154,7 +140,7 @@ struct NutritionTrackingView: View {
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 5]))
                 }
             }
-            .frame(height: 200)
+            .frame(height: 180)
             .chartXAxis {
                 if timeRange == .week {
                     AxisMarks(values: .stride(by: .day)) { value in
@@ -189,113 +175,68 @@ struct NutritionTrackingView: View {
         return .nutriRed
     }
 
-    // MARK: - Macro Trend Lines
+    // MARK: - Compact Macro Split
 
-    private var macroTrendChart: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Macro Trends")
-                .font(.headline)
-
-            Chart {
-                ForEach(summaries) { summary in
-                    LineMark(
-                        x: .value("Day", summary.date, unit: .day),
-                        y: .value("Grams", summary.totalProtein),
-                        series: .value("Macro", "Protein")
-                    )
-                    .foregroundStyle(.proteinColor)
-
-                    LineMark(
-                        x: .value("Day", summary.date, unit: .day),
-                        y: .value("Grams", summary.totalCarbs),
-                        series: .value("Macro", "Carbs")
-                    )
-                    .foregroundStyle(.carbsColor)
-
-                    LineMark(
-                        x: .value("Day", summary.date, unit: .day),
-                        y: .value("Grams", summary.totalFat),
-                        series: .value("Macro", "Fat")
-                    )
-                    .foregroundStyle(.fatColor)
-                }
-            }
-            .frame(height: 200)
-            .chartForegroundStyleScale([
-                "Protein": Color.proteinColor,
-                "Carbs": Color.carbsColor,
-                "Fat": Color.fatColor
-            ])
-            .chartXAxis {
-                if timeRange == .week {
-                    AxisMarks(values: .stride(by: .day)) { value in
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(date.shortDayOfWeek)
-                                    .font(.caption2)
-                            }
-                        }
-                    }
-                } else {
-                    AxisMarks(values: .stride(by: .day, count: 7)) { value in
-                        AxisValueLabel {
-                            if let date = value.as(Date.self) {
-                                Text(date.shortDateLabel)
-                                    .font(.caption2)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    // MARK: - Macro Pie Chart
-
-    private var macroPieChart: some View {
+    private var macroSplitCard: some View {
         let totalProtein = summaries.reduce(0) { $0 + $1.totalProtein }
         let totalCarbs = summaries.reduce(0) { $0 + $1.totalCarbs }
         let totalFat = summaries.reduce(0) { $0 + $1.totalFat }
         let total = totalProtein + totalCarbs + totalFat
 
-        return VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 10) {
             Text("Macro Split")
                 .font(.headline)
 
             if total > 0 {
-                Chart {
-                    SectorMark(angle: .value("Protein", totalProtein), innerRadius: .ratio(0.5))
-                        .foregroundStyle(.proteinColor)
-                    SectorMark(angle: .value("Carbs", totalCarbs), innerRadius: .ratio(0.5))
-                        .foregroundStyle(.carbsColor)
-                    SectorMark(angle: .value("Fat", totalFat), innerRadius: .ratio(0.5))
-                        .foregroundStyle(.fatColor)
-                }
-                .frame(height: 200)
-
                 HStack(spacing: 16) {
-                    legendItem("Protein", pct: totalProtein / total, color: .proteinColor)
-                    legendItem("Carbs", pct: totalCarbs / total, color: .carbsColor)
-                    legendItem("Fat", pct: totalFat / total, color: .fatColor)
+                    // Compact donut
+                    Chart {
+                        SectorMark(angle: .value("Protein", totalProtein), innerRadius: .ratio(0.6))
+                            .foregroundStyle(.proteinColor)
+                        SectorMark(angle: .value("Carbs", totalCarbs), innerRadius: .ratio(0.6))
+                            .foregroundStyle(.carbsColor)
+                        SectorMark(angle: .value("Fat", totalFat), innerRadius: .ratio(0.6))
+                            .foregroundStyle(.fatColor)
+                    }
+                    .frame(width: 100, height: 100)
+
+                    // Macro stats
+                    VStack(alignment: .leading, spacing: 8) {
+                        macroStatRow("Protein", grams: totalProtein, total: total, color: .proteinColor, target: goal?.proteinGramsTarget)
+                        macroStatRow("Carbs", grams: totalCarbs, total: total, color: .carbsColor, target: goal?.carbsGramsTarget)
+                        macroStatRow("Fat", grams: totalFat, total: total, color: .fatColor, target: goal?.fatGramsTarget)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity)
             } else {
                 Text("No data for this period")
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 100)
+                    .frame(maxWidth: .infinity, minHeight: 60)
             }
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 
-    private func legendItem(_ name: String, pct: Double, color: Color) -> some View {
-        HStack(spacing: 4) {
+    private func macroStatRow(_ name: String, grams: Double, total: Double, color: Color, target: Double?) -> some View {
+        let days = Double(max(summaries.count, 1))
+        let avgPerDay = grams / days
+        let pct = Int((grams / total) * 100)
+
+        return HStack(spacing: 6) {
             Circle().fill(color).frame(width: 8, height: 8)
-            Text("\(name) \(Int(pct * 100))%")
-                .font(.caption)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(name)
+                        .font(.caption.weight(.medium))
+                    Text("\(pct)%")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                Text("\(Int(avgPerDay))g/day avg")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -326,7 +267,7 @@ struct NutritionTrackingView: View {
                 .foregroundStyle(.nutriPurple)
                 .symbolSize(30)
             }
-            .frame(height: 200)
+            .frame(height: 150)
             .chartYAxis {
                 AxisMarks(position: .leading) { value in
                     AxisValueLabel {

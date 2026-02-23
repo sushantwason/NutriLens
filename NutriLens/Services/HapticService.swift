@@ -17,7 +17,6 @@ enum HapticService {
 
     static func mealSaved() { notification(.success) }
     static func mealDeleted() { notification(.warning) }
-    static func waterAdded() { impact(.light) }
     static func goalReached() { notification(.success) }
     static func tabChanged() { selection() }
     static func buttonTap() { impact(.light) }

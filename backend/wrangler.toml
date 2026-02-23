@@ -5,3 +5,7 @@ compatibility_date = "2024-12-01"
 # Secrets (set via `npx wrangler secret put`):
 # - ANTHROPIC_API_KEY: Your Anthropic API key
 # - APP_TOKEN: Shared token the iOS app sends to authenticate
+
+[[kv_namespaces]]
+binding = "FEEDBACK"
+id = "13451d365fe8477a8b4e2f44f0c16315"
