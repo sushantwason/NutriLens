@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct DashboardView: View {
     @Query(filter: #Predicate<Meal> { meal in
@@ -12,9 +13,10 @@ struct DashboardView: View {
 
     @Query private var profiles: [UserProfile]
 
+    @Environment(\.modelContext) private var modelContext
+
     @State private var coachService = NutritionCoachService()
     @State private var showScanSheet = false
-    @State private var scanButtonPressed = false
 
     // Cached streak values to avoid expensive recalculation on every render
     @State private var cachedCurrentStreak: Int = 0
@@ -34,72 +36,38 @@ struct DashboardView: View {
         activeGoals.first
     }
 
-    // MARK: - Remaining Budget
-
-    private var remainingBudget: MealSuggestionService.RemainingBudget? {
-        guard let goal else { return nil }
-        return MealSuggestionService.remainingBudget(todayTotals: todayTotals, goal: goal)
-    }
-
-    private var mealSuggestion: String? {
-        guard let budget = remainingBudget else { return nil }
-        return MealSuggestionService.suggestion(for: budget)
-    }
-
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        // Branded header
-                        brandedHeaderCard
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    // Branded header with streak + settings
+                    brandedHeaderCard
 
-                        // Main calorie + macros hero
-                        calorieHeroCard
+                    // Main calorie + macros hero
+                    calorieHeroCard
 
-                        // Streak row
-                        streakRow
+                    // Full-width Scan Meal button
+                    scanMealButton
 
-                        // Water + Weight
-                        WaterProgressCard()
-                        WeightSummaryCard()
+                    // Today's meals
+                    todayMealsSection
 
-                        // Remaining budget
-                        if let budget = remainingBudget {
-                            RemainingBudgetCard(budget: budget, suggestion: mealSuggestion)
-                        }
+                    // Water tracking
+                    WaterProgressCard()
 
-                        // AI Coach
-                        CoachInsightCard(
-                            insight: coachService.latestInsight,
-                            isLoading: coachService.isLoading,
-                            onRefresh: { fetchCoachInsight() }
-                        )
-
-                        // Weekly report
-                        weeklyReportLink
-
-                        // Today's meals
-                        todayMealsSection
-
-                        // Bottom spacer for FAB clearance
-                        Color.clear.frame(height: 90)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
+                    // Bottom spacer
+                    Color.clear.frame(height: 24)
                 }
-                .background(Color(.systemGroupedBackground))
-
-                // Floating Scan Button
-                scanFAB
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationBarHidden(true)
             .fullScreenCover(isPresented: $showScanSheet) {
                 CameraCaptureView()
             }
             .task {
                 recalculateStreaks()
-                fetchCoachInsight()
             }
             .onChange(of: allMeals.count) { _, _ in
                 recalculateStreaks()
@@ -148,6 +116,15 @@ struct DashboardView: View {
             }
 
             Spacer()
+
+            // Streak counter (compact)
+            HStack(spacing: 4) {
+                Image(systemName: "flame.fill")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(cachedCurrentStreak > 0 ? .nutriOrange : .secondary)
+                Text("\(cachedCurrentStreak)")
+                    .font(.subheadline.weight(.bold))
+            }
 
             NavigationLink {
                 SettingsView()
@@ -266,59 +243,9 @@ struct DashboardView: View {
         .padding(.horizontal, 4)
     }
 
-    // MARK: - Streak Row
+    // MARK: - Full-width Scan Meal Button
 
-    private var streakRow: some View {
-        HStack(spacing: 12) {
-            // Current streak
-            HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color.nutriOrange.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "flame.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(cachedCurrentStreak > 0 ? .nutriOrange : .secondary)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(cachedCurrentStreak)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                    Text("day streak")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-
-            // Longest streak
-            HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color.nutriPurple.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "trophy.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(cachedLongestStreak > 0 ? .nutriPurple : .secondary)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(cachedLongestStreak)")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                    Text("best streak")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        }
-    }
-
-    // MARK: - Floating Scan Button
-
-    private var scanFAB: some View {
+    private var scanMealButton: some View {
         Button {
             HapticService.scanStarted()
             showScanSheet = true
@@ -330,7 +257,7 @@ struct DashboardView: View {
                     .font(.callout.weight(.bold))
             }
             .foregroundStyle(.white)
-            .padding(.horizontal, 28)
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(
                 LinearGradient(
@@ -338,68 +265,11 @@ struct DashboardView: View {
                         Color(red: 0.28, green: 0.72, blue: 0.40),
                         Color(red: 0.18, green: 0.55, blue: 0.30)
                     ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    startPoint: .leading,
+                    endPoint: .trailing
                 ),
-                in: Capsule()
+                in: RoundedRectangle(cornerRadius: 14)
             )
-            .shadow(color: Color(red: 0.22, green: 0.62, blue: 0.34).opacity(0.5), radius: 16, y: 8)
-        }
-        .scaleEffect(scanButtonPressed ? 0.92 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: scanButtonPressed)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in scanButtonPressed = true }
-                .onEnded { _ in scanButtonPressed = false }
-        )
-        .padding(.bottom, 28)
-    }
-
-    // MARK: - Coach
-
-    private func fetchCoachInsight() {
-        let hash = coachService.progressHash(totals: todayTotals)
-        guard coachService.shouldRefresh(currentHash: hash) else { return }
-        Task {
-            await coachService.fetchInsight(
-                todayTotals: todayTotals,
-                goal: goal,
-                streak: cachedCurrentStreak,
-                restrictions: profiles.first?.dietaryRestrictions ?? []
-            )
-        }
-    }
-
-    // MARK: - Weekly Report Link
-
-    private var weeklyReportLink: some View {
-        NavigationLink {
-            WeeklyReportView()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.bar.doc.horizontal.fill")
-                    .font(.body)
-                    .foregroundStyle(.nutriGreen)
-                    .frame(width: 36, height: 36)
-                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Weekly Report")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("View your nutrition trends")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }
@@ -437,51 +307,111 @@ struct DashboardView: View {
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
             } else {
                 ForEach(todaysMeals) { meal in
-                    MealRowCard(meal: meal)
+                    MealRowCard(meal: meal, onDelete: {
+                        deleteMeal(meal)
+                    })
                 }
             }
+        }
+    }
+
+    private func deleteMeal(_ meal: Meal) {
+        withAnimation {
+            HapticService.mealDeleted()
+            modelContext.delete(meal)
+            try? modelContext.save()
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }
 
 struct MealRowCard: View {
     let meal: Meal
+    var onDelete: (() -> Void)?
+
+    @State private var offset: CGFloat = 0
+    @State private var showDeleteButton = false
+    private let deleteThreshold: CGFloat = -70
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Meal type icon
-            Image(systemName: meal.mealType.icon)
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.nutriGreen)
-                .frame(width: 40, height: 40)
-                .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(meal.name)
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(1)
-
-                Text(meal.timestamp.shortTimeString)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("\(meal.totalCalories.calorieString) kcal")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.calorieColor)
-
-                HStack(spacing: 6) {
-                    macroLabel("P", meal.totalProteinGrams, .proteinColor)
-                    macroLabel("C", meal.totalCarbsGrams, .carbsColor)
-                    macroLabel("F", meal.totalFatGrams, .fatColor)
+        ZStack(alignment: .trailing) {
+            // Delete button behind
+            if showDeleteButton {
+                Button(role: .destructive) {
+                    onDelete?()
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
+                .frame(width: 60)
+                .frame(maxHeight: .infinity)
+                .background(.red, in: RoundedRectangle(cornerRadius: 14))
             }
+
+            // Main row content
+            NavigationLink(destination: MealDetailView(meal: meal)) {
+                HStack(spacing: 12) {
+                    // Meal type icon
+                    Image(systemName: meal.mealType.icon)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.nutriGreen)
+                        .frame(width: 40, height: 40)
+                        .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(meal.name)
+                            .font(.subheadline.weight(.medium))
+                            .lineLimit(1)
+
+                        Text(meal.timestamp.shortTimeString)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("\(meal.totalCalories.calorieString) kcal")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.calorieColor)
+
+                        HStack(spacing: 6) {
+                            macroLabel("P", meal.totalProteinGrams, .proteinColor)
+                            macroLabel("C", meal.totalCarbsGrams, .carbsColor)
+                            macroLabel("F", meal.totalFatGrams, .fatColor)
+                        }
+                    }
+                }
+                .padding(12)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+            .offset(x: offset)
+            .gesture(
+                DragGesture(minimumDistance: 20)
+                    .onChanged { value in
+                        let translation = value.translation.width
+                        // Only allow left swipe
+                        if translation < 0 {
+                            offset = translation
+                            showDeleteButton = true
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.3)) {
+                            if offset < deleteThreshold {
+                                offset = deleteThreshold
+                            } else {
+                                offset = 0
+                                showDeleteButton = false
+                            }
+                        }
+                    }
+            )
         }
-        .padding(12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .clipped()
     }
 
     private func macroLabel(_ letter: String, _ value: Double, _ color: Color) -> some View {

@@ -5,6 +5,8 @@ struct MealDetailView: View {
     let meal: Meal
     @Environment(\.modelContext) private var modelContext
     @State private var showRelogConfirmation = false
+    @State private var showEditSheet = false
+    @State private var editedName = ""
 
     var body: some View {
         ScrollView {
@@ -48,6 +50,14 @@ struct MealDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 16) {
                     Button {
+                        editedName = meal.name
+                        showEditSheet = true
+                    } label: {
+                        Image(systemName: "pencil")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button {
                         HapticService.buttonTap()
                         meal.isFavorite.toggle()
                         try? modelContext.save()
@@ -64,6 +74,7 @@ struct MealDetailView: View {
                         showRelogConfirmation = true
                     } label: {
                         Image(systemName: "arrow.clockwise")
+                            .foregroundStyle(.nutriGreen)
                     }
                 }
             }
@@ -72,6 +83,32 @@ struct MealDetailView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("\(meal.name) has been logged again for today.")
+        }
+        .sheet(isPresented: $showEditSheet) {
+            NavigationStack {
+                Form {
+                    Section("Meal Name") {
+                        TextField("Name", text: $editedName)
+                    }
+                }
+                .navigationTitle("Edit Meal")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showEditSheet = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            meal.name = editedName
+                            try? modelContext.save()
+                            HapticService.buttonTap()
+                            showEditSheet = false
+                        }
+                        .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+            .presentationDetents([.medium])
         }
     }
 
