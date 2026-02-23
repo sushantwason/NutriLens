@@ -375,38 +375,50 @@ function privacyPage() {
 <p>MealSight ("the App") is developed by Sushant Wason. This Privacy Policy explains how we collect, use, and protect your information.</p>
 
 <h2>1. Information We Collect</h2>
-<p>MealSight collects the following data to provide nutrition tracking:</p>
+<p>MealSight collects the following data to provide nutrition tracking and analysis:</p>
 <ul>
-  <li><strong>Meal photos:</strong> Photos you take or select for AI-powered nutritional analysis.</li>
-  <li><strong>Nutrition data:</strong> Calorie and macronutrient information from your logged meals.</li>
-  <li><strong>Body profile:</strong> Optional weight, height, age, and activity level for goal calculations.</li>
-  <li><strong>Health data:</strong> If you enable Apple Health integration, we read weight and write nutrition/water data.</li>
-  <li><strong>Usage data:</strong> Meal logging streaks, accuracy feedback ratings, and feature usage.</li>
+  <li><strong>Meal photos:</strong> Photos you take or select for AI-powered nutritional analysis, including single-photo and multi-photo meal scans, nutrition label scans, and recipe scans.</li>
+  <li><strong>Nutrition data:</strong> Calorie, macronutrient (protein, carbs, fat), and micronutrient (fiber, sugar, sodium, cholesterol, saturated fat, trans fat) information from your logged meals.</li>
+  <li><strong>Body profile:</strong> Optional height, weight, age, biological sex, and activity level used for daily goal and TDEE calculations.</li>
+  <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, halal, kosher) used for dietary alert detection.</li>
+  <li><strong>Health data:</strong> If you enable Apple Health integration, we read your weight and write dietary energy, protein, carbohydrates, fat, and water intake to Apple Health.</li>
+  <li><strong>Water intake:</strong> Glasses or milliliters of water you log daily.</li>
+  <li><strong>Feedback data:</strong> Accuracy ratings you provide on AI meal analysis results and any feedback you submit through the app.</li>
+  <li><strong>App preferences:</strong> Meal reminder times, notification settings, AI consent status, and display preferences stored locally.</li>
 </ul>
 
 <h2>2. How We Use Your Data</h2>
 <ul>
-  <li><strong>AI Analysis:</strong> When you scan a meal, label, or recipe, your photo is sent to Anthropic's Claude API for nutritional analysis. The image is processed to generate estimates and the results are returned to your device.</li>
-  <li><strong>AI Coach:</strong> Your daily nutrition progress (calories, macros, streak) is sent to Anthropic's Claude API to generate motivational tips and meal suggestions. No photos or personal identifiers are included.</li>
-  <li><strong>Text Search:</strong> Food search queries are sent to the USDA FoodData Central API to retrieve nutritional data.</li>
-  <li><strong>Local Storage:</strong> Your meal history, goals, body profile, and preferences are stored locally on your device using Apple's SwiftData framework.</li>
+  <li><strong>AI Meal Analysis:</strong> When you scan a meal, nutrition label, or recipe, your photo is sent to Anthropic's Claude API for nutritional analysis. For multi-photo scans, multiple images are sent together. The images are processed to generate calorie and nutrient estimates, dietary flags, and a confidence score, then the results are returned to your device.</li>
+  <li><strong>AI Coach:</strong> Your daily nutrition progress (calories, protein, carbs, fat, and their targets), current logging streak, time of day, and dietary restrictions are sent to Anthropic's Claude API to generate motivational tips, actionable advice, and meal suggestions. No photos or personal identifiers are included in coach requests.</li>
+  <li><strong>Text Food Search:</strong> Food search queries you type are sent to the USDA FoodData Central API to retrieve matching food items and their nutritional data. Only the search text is transmitted.</li>
+  <li><strong>Smart Insights:</strong> Your meal history is analyzed locally on your device to generate nutrition insights, eating pattern analysis, macro balance reports, and goal suggestions. This analysis happens entirely on-device.</li>
+  <li><strong>Siri Shortcuts:</strong> If you use Siri Shortcuts (log water, today's summary, calories remaining), MealSight reads your local meal data to respond. No data is sent to external services through Siri.</li>
+  <li><strong>Widgets:</strong> Home screen and lock screen widgets display your daily calorie and macro progress. Widget data is read from your local meal history and refreshed periodically.</li>
+  <li><strong>Notifications:</strong> If you enable meal reminders, notification times are stored locally. Notifications are scheduled through Apple's local notification system and do not involve any external servers.</li>
+  <li><strong>Data Export:</strong> You can export your meal history as CSV or PDF files. Exported files are generated locally on your device and shared through the iOS share sheet.</li>
+  <li><strong>Local Storage:</strong> Your meal history, goals, body profile, achievements, streaks, and preferences are stored locally on your device using Apple's SwiftData framework.</li>
 </ul>
 
 <h2>3. Third-Party Data Sharing</h2>
 <p>We share data with the following third parties solely for app functionality:</p>
 <ul>
-  <li><strong>Anthropic (Claude API):</strong> Receives meal photos and nutrition progress for AI analysis. Anthropic does not use API data to train AI models. Images are not stored beyond what is needed to complete the request. See <a href="https://www.anthropic.com/privacy">Anthropic's Privacy Policy</a>.</li>
-  <li><strong>USDA FoodData Central:</strong> Receives text search queries for food nutrition lookup.</li>
-  <li><strong>Apple (StoreKit, HealthKit):</strong> Processes subscriptions and health data sync per Apple's policies.</li>
+  <li><strong>Anthropic (Claude API):</strong> Receives meal/label/recipe photos (base64-encoded) for AI nutritional analysis, and receives daily nutrition progress summaries for AI coaching. Anthropic does not use API data to train AI models. Images are processed in real time and are not stored beyond what is needed to complete the request. See <a href="https://www.anthropic.com/privacy">Anthropic's Privacy Policy</a>.</li>
+  <li><strong>USDA FoodData Central:</strong> Receives text search queries for food nutrition lookup. No personal data is included in these requests.</li>
+  <li><strong>Apple (StoreKit):</strong> Processes in-app subscription purchases per Apple's policies.</li>
+  <li><strong>Apple (HealthKit):</strong> If you grant permission, MealSight writes dietary nutrients and water intake to Apple Health and reads your weight. This data exchange is governed by Apple's privacy policies.</li>
 </ul>
-<p>We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Health and fitness data is never used for advertising or data mining.</p>
+<p>We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Health and fitness data is never used for advertising, marketing, or use-based data mining, in compliance with Apple's App Store guidelines.</p>
+<p>We do not use any third-party analytics, crash reporting, or tracking SDKs. No usage data is sent to external analytics services.</p>
 
 <h2>4. Data Storage and Security</h2>
 <ul>
-  <li>All personal data (meals, goals, body profile) is stored locally on your device.</li>
+  <li>All personal data (meals, photos, goals, body profile, dietary restrictions, achievements, streaks) is stored locally on your device.</li>
   <li>Personal health information is not stored in iCloud.</li>
-  <li>Data transmitted to third-party APIs uses HTTPS encryption.</li>
-  <li>No user accounts are created — there are no passwords or credentials stored.</li>
+  <li>All data transmitted to third-party APIs (Anthropic, USDA) uses HTTPS encryption in transit.</li>
+  <li>No user accounts are created — there are no passwords, emails, or credentials collected or stored.</li>
+  <li>Meal photos are stored in the app's local data container and are not accessible to other apps.</li>
+  <li>Feedback you submit is stored on our server with a random identifier only — no personal information is attached.</li>
 </ul>
 
 <h2>5. Data Retention and Deletion</h2>
@@ -415,20 +427,23 @@ function privacyPage() {
   <li>Delete individual meals by swiping to delete in the app.</li>
   <li>Delete all app data by uninstalling MealSight from your device.</li>
   <li>Photos sent for AI analysis are processed in real time and not retained by Anthropic beyond the API request.</li>
+  <li>Revoke HealthKit permissions at any time through iOS Settings > Health > Data Access.</li>
+  <li>Withdraw AI consent at any time in the app's Settings, which will prevent further photo analysis.</li>
 </ul>
 
 <h2>6. Your Rights</h2>
 <p>You have the right to:</p>
 <ul>
   <li>Access all your data (stored locally on your device).</li>
-  <li>Delete your data at any time.</li>
-  <li>Opt out of AI analysis by not using the scan feature.</li>
-  <li>Withdraw AI consent at any time in Settings.</li>
-  <li>Export your data using the in-app Export feature.</li>
+  <li>Delete your data at any time by removing meals or uninstalling the app.</li>
+  <li>Export your data in CSV or PDF format using the in-app Export feature.</li>
+  <li>Opt out of AI analysis by not using the scan feature or withdrawing AI consent in Settings.</li>
+  <li>Opt out of HealthKit integration by revoking permissions in iOS Settings.</li>
+  <li>Disable notifications and Siri Shortcuts at any time.</li>
 </ul>
 
 <h2>7. Children's Privacy</h2>
-<p>MealSight is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with data, please contact us.</p>
+<p>MealSight is not intended for children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided data through the app, please contact us.</p>
 
 <h2>8. Changes to This Policy</h2>
 <p>We may update this Privacy Policy from time to time. Changes will be reflected by the "Last updated" date at the top of this page.</p>
@@ -441,49 +456,92 @@ function privacyPage() {
 
 function termsPage() {
   return htmlPage("Terms of Use", `
-<p>By downloading or using MealSight ("the App"), you agree to these Terms of Use.</p>
+<p>By downloading or using MealSight ("the App"), you agree to these Terms of Use. If you do not agree, do not use the App.</p>
 
 <h2>1. Description of Service</h2>
-<p>MealSight is a nutrition tracking app that uses AI-powered photo analysis to estimate calorie and macronutrient content of meals. The App also provides an AI Coach feature with motivational tips and meal suggestions.</p>
+<p>MealSight is a nutrition tracking app that helps you understand your eating habits. The App provides:</p>
+<ul>
+  <li><strong>AI Photo Analysis:</strong> Scan meals, nutrition labels, and recipes using your camera or photo library. Photos are analyzed by AI to estimate nutritional content. Supports single-photo and multi-photo meal scans.</li>
+  <li><strong>AI Coach:</strong> Personalized motivational tips, actionable nutrition advice, and meal suggestions based on your daily progress.</li>
+  <li><strong>Manual Tracking:</strong> Log meals via text-based food search powered by the USDA FoodData Central database.</li>
+  <li><strong>Smart Insights:</strong> On-device analysis of your eating patterns, macro balance, meal timing, and nutrition trends.</li>
+  <li><strong>Health Integration:</strong> Optional Apple Health sync for weight tracking and nutrition data sharing.</li>
+  <li><strong>Siri Shortcuts:</strong> Voice-activated commands to log water, check daily summaries, and view remaining calories.</li>
+  <li><strong>Widgets:</strong> Home screen and lock screen widgets showing daily nutrition progress.</li>
+  <li><strong>Data Export:</strong> Export your meal history in CSV or PDF format.</li>
+  <li><strong>Dietary Alerts:</strong> Automatic detection of foods that may conflict with your dietary restrictions.</li>
+</ul>
 
 <h2>2. Medical Disclaimer</h2>
-<p><strong>MealSight is not a medical device.</strong> It does not diagnose, treat, cure, or prevent any disease or medical condition. Nutritional estimates are approximations generated by artificial intelligence and may vary from actual values. Do not rely on this App as a substitute for professional medical advice, diagnosis, or treatment.</p>
-<p>Always consult your physician or a qualified healthcare professional before making dietary changes, especially if you have medical conditions, food allergies, are pregnant or nursing, or have an eating disorder.</p>
+<p><strong>MealSight is not a medical device.</strong> It is designed for general wellness and informational purposes only. It does not diagnose, treat, cure, or prevent any disease or medical condition.</p>
+<p>Nutritional estimates are approximations generated by artificial intelligence and the USDA database. They may vary from actual values and should not be used as the sole basis for medical or dietary decisions.</p>
+<p>Always consult your physician or a qualified healthcare professional before making dietary changes, especially if you have medical conditions (such as diabetes, kidney disease, or heart disease), food allergies, are pregnant or nursing, or have an eating disorder.</p>
 
 <h2>3. AI-Generated Content</h2>
-<p>Nutritional estimates, meal suggestions, coaching tips, and other content generated by AI are for informational and general wellness purposes only. They are not personalized medical or nutritional advice and do not account for your complete medical history, allergies, or medication interactions.</p>
+<p>The following features use artificial intelligence and produce AI-generated content:</p>
+<ul>
+  <li><strong>Meal/label/recipe photo analysis</strong> — calorie and nutrient estimates, food item identification, dietary flag detection, and confidence scores.</li>
+  <li><strong>AI Coach</strong> — motivational messages, nutrition tips, and meal/recipe suggestions.</li>
+  <li><strong>Smart Insights</strong> — eating pattern analysis and goal suggestions (generated on-device).</li>
+</ul>
+<p>All AI-generated content is for informational and general wellness purposes only. It is not personalized medical or nutritional advice and does not account for your complete medical history, allergies, medication interactions, or individual nutritional needs. AI suggestions may occasionally be inaccurate or inappropriate — always use your own judgment.</p>
 
 <h2>4. Accuracy of Estimates</h2>
-<p>Calorie and macronutrient estimates may vary by 20% or more from actual values depending on portion sizes, cooking methods, specific ingredients, and image quality. For precise nutritional information, consult product nutrition labels or a registered dietitian.</p>
-
-<h2>5. Subscriptions</h2>
+<p>Calorie and macronutrient estimates may vary by 20% or more from actual values depending on:</p>
 <ul>
+  <li>Portion size estimation from photos</li>
+  <li>Food preparation methods and recipes</li>
+  <li>Ingredient variations between brands</li>
+  <li>Image quality and lighting conditions</li>
+  <li>Limitations of AI image recognition</li>
+</ul>
+<p>Nutrition label scanning accuracy depends on label legibility and image clarity. For precise nutritional information, refer to product nutrition labels or consult a registered dietitian.</p>
+
+<h2>5. Dietary Alerts Disclaimer</h2>
+<p>Dietary alert detection (e.g., gluten, dairy, nuts, shellfish, soy, eggs) is based on AI analysis and keyword matching. It may not detect all allergens or dietary conflicts. <strong>Do not rely solely on MealSight for allergen detection.</strong> Always verify ingredients independently if you have food allergies or sensitivities.</p>
+
+<h2>6. Subscriptions</h2>
+<ul>
+  <li>MealSight offers optional subscription plans that unlock additional features.</li>
   <li>Payment is charged to your Apple ID account at confirmation of purchase.</li>
   <li>Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period.</li>
   <li>Your account will be charged for renewal within 24 hours prior to the end of the current period.</li>
-  <li>Manage subscriptions and turn off auto-renewal in your Account Settings.</li>
+  <li>Manage subscriptions and turn off auto-renewal in your Account Settings after purchase.</li>
   <li>Any unused portion of a free trial period will be forfeited upon purchase of a subscription.</li>
 </ul>
 
-<h2>6. No Professional Relationship</h2>
-<p>Use of MealSight does not create a physician-patient, dietitian-client, or any other professional-client relationship.</p>
+<h2>7. No Professional Relationship</h2>
+<p>Use of MealSight does not create a physician-patient, dietitian-client, or any other professional-client relationship. The information provided through this App, including AI Coach suggestions and Smart Insights, is for general educational and informational purposes only.</p>
 
-<h2>7. Third-Party Services</h2>
-<p>The App uses Anthropic's Claude API for AI analysis and the USDA FoodData Central database for text-based food search. These services are governed by their own terms and privacy policies.</p>
+<h2>8. Third-Party Services</h2>
+<p>The App relies on the following third-party services:</p>
+<ul>
+  <li><strong>Anthropic (Claude API):</strong> Powers AI meal analysis and coaching. Governed by <a href="https://www.anthropic.com/terms">Anthropic's Terms</a>.</li>
+  <li><strong>USDA FoodData Central:</strong> Provides food nutrition database for text search.</li>
+  <li><strong>Apple HealthKit:</strong> Optional health data integration, governed by Apple's terms.</li>
+  <li><strong>Apple StoreKit:</strong> Processes subscription purchases, governed by Apple's terms.</li>
+</ul>
+<p>We are not responsible for the availability, accuracy, or policies of third-party services. If a third-party service is temporarily unavailable, affected features may not function until the service is restored.</p>
 
-<h2>8. Limitation of Liability</h2>
-<p>To the maximum extent permitted by law, MealSight and its developer shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the App, including but not limited to health outcomes based on nutritional estimates.</p>
+<h2>9. Limitation of Liability</h2>
+<p>To the maximum extent permitted by law, MealSight and its developer shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the App, including but not limited to:</p>
+<ul>
+  <li>Health outcomes based on nutritional estimates or AI suggestions</li>
+  <li>Allergic reactions from undetected dietary conflicts</li>
+  <li>Data loss due to device failure or app removal</li>
+  <li>Inaccurate nutritional data from AI analysis or database lookups</li>
+</ul>
 
-<h2>9. Acceptable Use</h2>
-<p>You agree not to misuse the App, attempt to reverse engineer it, or use it for any purpose other than personal nutrition tracking.</p>
+<h2>10. Acceptable Use</h2>
+<p>You agree not to misuse the App, attempt to reverse engineer it, circumvent subscription restrictions, or use it for any purpose other than personal nutrition tracking and wellness.</p>
 
-<h2>10. Termination</h2>
+<h2>11. Termination</h2>
 <p>We reserve the right to terminate or suspend access to the App at any time for violation of these terms.</p>
 
-<h2>11. Changes to Terms</h2>
+<h2>12. Changes to Terms</h2>
 <p>We may update these Terms from time to time. Continued use of the App after changes constitutes acceptance of the new terms.</p>
 
-<h2>12. Contact</h2>
+<h2>13. Contact</h2>
 <p>Questions about these Terms? Contact us at:</p>
 <p><a href="mailto:support@mealsightapp.com">support@mealsightapp.com</a></p>
 `);
