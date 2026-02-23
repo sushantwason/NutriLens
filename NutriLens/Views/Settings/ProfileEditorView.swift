@@ -3,14 +3,11 @@ import SwiftData
 
 struct ProfileEditorView: View {
     @Bindable var profile: UserProfile
-    @Query(filter: #Predicate<DailyGoal> { $0.isActive == true }) private var activeGoals: [DailyGoal]
     @Environment(\.modelContext) private var modelContext
 
-    private var goal: DailyGoal? { activeGoals.first }
-
-    private var recommendation: TDEECalculator.GoalRecommendation {
-        TDEECalculator.recommendGoals(profile: profile)
-    }
+    @State private var goal: DailyGoal?
+    @State private var recommendation: TDEECalculator.GoalRecommendation?
+    @State private var didLoad = false
 
     private var bmiColor: Color {
         switch profile.bmi {
@@ -21,6 +18,10 @@ struct ProfileEditorView: View {
         }
     }
 
+    private func refreshRecommendation() {
+        recommendation = TDEECalculator.recommendGoals(profile: profile)
+    }
+
     var body: some View {
         List {
             // MARK: - Body Measurements
@@ -28,7 +29,11 @@ struct ProfileEditorView: View {
                 sliderRow(
                     value: Binding(
                         get: { profile.heightCM },
-                        set: { profile.heightCM = $0; profile.updatedDate = Date() }
+                        set: {
+                            profile.heightCM = $0
+                            profile.updatedDate = Date()
+                            refreshRecommendation()
+                        }
                     ),
                     range: 140...220,
                     step: 1,
@@ -40,7 +45,11 @@ struct ProfileEditorView: View {
                 sliderRow(
                     value: Binding(
                         get: { profile.weightKG },
-                        set: { profile.weightKG = $0; profile.updatedDate = Date() }
+                        set: {
+                            profile.weightKG = $0
+                            profile.updatedDate = Date()
+                            refreshRecommendation()
+                        }
                     ),
                     range: 40...200,
                     step: 0.5,
@@ -52,7 +61,11 @@ struct ProfileEditorView: View {
                 sliderRow(
                     value: Binding(
                         get: { Double(profile.age) },
-                        set: { profile.age = Int($0); profile.updatedDate = Date() }
+                        set: {
+                            profile.age = Int($0)
+                            profile.updatedDate = Date()
+                            refreshRecommendation()
+                        }
                     ),
                     range: 15...80,
                     step: 1,
@@ -69,6 +82,9 @@ struct ProfileEditorView: View {
                         Text(sex.displayName).tag(sex)
                     }
                 }
+                .onChange(of: profile.biologicalSex) { _, _ in
+                    refreshRecommendation()
+                }
 
                 Picker("Activity Level", selection: $profile.activityLevel) {
                     ForEach(ActivityLevel.allCases) { level in
@@ -77,6 +93,9 @@ struct ProfileEditorView: View {
                         }
                         .tag(level)
                     }
+                }
+                .onChange(of: profile.activityLevel) { _, _ in
+                    refreshRecommendation()
                 }
 
                 Text(profile.activityLevel.description)
@@ -141,26 +160,38 @@ struct ProfileEditorView: View {
             }
 
             // MARK: - Recommended Goals
-            Section("Recommended Goals") {
-                VStack(alignment: .leading, spacing: 8) {
-                    recommendedRow("Calories", value: recommendation.calories, unit: "kcal", color: .calorieColor)
-                    recommendedRow("Protein", value: recommendation.proteinGrams, unit: "g", color: .proteinColor)
-                    recommendedRow("Carbs", value: recommendation.carbsGrams, unit: "g", color: .carbsColor)
-                    recommendedRow("Fat", value: recommendation.fatGrams, unit: "g", color: .fatColor)
-                }
+            if let rec = recommendation {
+                Section("Recommended Goals") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        recommendedRow("Calories", value: rec.calories, unit: "kcal", color: .calorieColor)
+                        recommendedRow("Protein", value: rec.proteinGrams, unit: "g", color: .proteinColor)
+                        recommendedRow("Carbs", value: rec.carbsGrams, unit: "g", color: .carbsColor)
+                        recommendedRow("Fat", value: rec.fatGrams, unit: "g", color: .fatColor)
+                    }
 
-                if let goal {
-                    Button {
-                        TDEECalculator.applyRecommendation(recommendation, to: goal)
-                        try? modelContext.save()
-                    } label: {
-                        Label("Apply to Daily Goals", systemImage: "arrow.triangle.2.circlepath")
+                    if let goal {
+                        Button {
+                            TDEECalculator.applyRecommendation(rec, to: goal)
+                            try? modelContext.save()
+                        } label: {
+                            Label("Apply to Daily Goals", systemImage: "arrow.triangle.2.circlepath")
+                        }
                     }
                 }
             }
         }
         .navigationTitle("Body Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard !didLoad else { return }
+            didLoad = true
+            // Load goal manually to avoid @Query re-render loops
+            let descriptor = FetchDescriptor<DailyGoal>(
+                predicate: #Predicate<DailyGoal> { $0.isActive == true }
+            )
+            goal = try? modelContext.fetch(descriptor).first
+            refreshRecommendation()
+        }
     }
 
     private func recommendedRow(_ name: String, value: Double, unit: String, color: Color) -> some View {
