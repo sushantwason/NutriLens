@@ -321,16 +321,16 @@ struct PaywallView: View {
 
     private var footerSection: some View {
         VStack(spacing: 8) {
-            Text("Payment will be charged to your Apple ID account. Subscription auto-renews unless cancelled at least 24 hours before the end of the current period.")
+            Text("Payment will be charged to your Apple ID account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period. Manage subscriptions and turn off auto-renewal in your Account Settings. Any unused portion of a free trial period will be forfeited upon purchase.")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 16) {
-                if let privacyURL = URL(string: "https://nutrilens.app/privacy") {
+                if let privacyURL = URL(string: "https://mealsightapp.com/privacy") {
                     Link("Privacy Policy", destination: privacyURL)
                 }
-                if let termsURL = URL(string: "https://nutrilens.app/terms") {
+                if let termsURL = URL(string: "https://mealsightapp.com/terms") {
                     Link("Terms of Use", destination: termsURL)
                 }
             }
