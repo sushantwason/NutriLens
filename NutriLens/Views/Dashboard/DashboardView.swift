@@ -484,6 +484,7 @@ struct MealRowCard: View {
     var onDuplicate: (() -> Void)?
 
     @State private var offset: CGFloat = 0
+    @State private var startOffset: CGFloat = 0
     private let actionWidth: CGFloat = 70
 
     var body: some View {
@@ -492,6 +493,7 @@ struct MealRowCard: View {
             HStack(spacing: 0) {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0 }
+                    startOffset = 0
                     onDuplicate?()
                 } label: {
                     VStack(spacing: 2) {
@@ -574,13 +576,8 @@ struct MealRowCard: View {
                 DragGesture(minimumDistance: 30, coordinateSpace: .local)
                     .onChanged { value in
                         guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        if value.translation.width < 0 {
-                            // Swipe left: reveal delete
-                            offset = max(value.translation.width, -actionWidth)
-                        } else if value.translation.width > 0 {
-                            // Swipe right: reveal duplicate
-                            offset = min(value.translation.width, actionWidth)
-                        }
+                        let proposed = startOffset + value.translation.width
+                        offset = min(max(proposed, -actionWidth), actionWidth)
                     }
                     .onEnded { value in
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -592,6 +589,7 @@ struct MealRowCard: View {
                                 offset = 0
                             }
                         }
+                        startOffset = offset
                     }
             )
             .contextMenu {
