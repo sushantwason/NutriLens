@@ -52,6 +52,16 @@ struct NutritionTrackingView: View {
             }
             .navigationTitle("Tracking")
             .background(Color(.systemGroupedBackground))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
     }
 

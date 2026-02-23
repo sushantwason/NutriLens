@@ -1,18 +1,21 @@
 import SwiftUI
+import MessageUI
 
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var feedbackType: FeedbackType = .general
+    @State private var selectedCategory: FeedbackCategory = .general
     @State private var message: String = ""
     @State private var rating: Int = 0
     @State private var submitted = false
+    @State private var showMailError = false
 
-    enum FeedbackType: String, CaseIterable, Identifiable {
+    enum FeedbackCategory: String, CaseIterable, Identifiable {
         case general = "General Feedback"
         case bug = "Bug Report"
         case feature = "Feature Request"
-        case accuracy = "Analysis Accuracy"
+        case scanning = "Scanning Issue"
+        case design = "Design/UX"
 
         var id: String { rawValue }
 
@@ -21,7 +24,18 @@ struct FeedbackView: View {
             case .general: return "bubble.left.fill"
             case .bug: return "ladybug.fill"
             case .feature: return "lightbulb.fill"
-            case .accuracy: return "target"
+            case .scanning: return "camera.fill"
+            case .design: return "paintbrush.fill"
+            }
+        }
+
+        var chipLabel: String {
+            switch self {
+            case .general: return "General Feedback"
+            case .bug: return "Bug Report"
+            case .feature: return "Feature Request"
+            case .scanning: return "Scanning Issue"
+            case .design: return "Design/UX"
             }
         }
     }
@@ -36,6 +50,11 @@ struct FeedbackView: View {
         }
         .navigationTitle("Feedback")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Unable to Send Email", isPresented: $showMailError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your device isn't configured for email. Please send your feedback to nutrilenshealth@gmail.com")
+        }
     }
 
     // MARK: - Form
@@ -61,14 +80,21 @@ struct FeedbackView: View {
                 .padding(.vertical, 8)
             }
 
-            Section("Feedback Type") {
-                Picker("Type", selection: $feedbackType) {
-                    ForEach(FeedbackType.allCases) { type in
-                        Label(type.rawValue, systemImage: type.icon)
-                            .tag(type)
+            Section("What's this about?") {
+                FlowLayout(spacing: 8) {
+                    ForEach(FeedbackCategory.allCases) { category in
+                        CategoryChip(
+                            label: category.chipLabel,
+                            icon: category.icon,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation(.spring(response: 0.25)) {
+                                selectedCategory = category
+                            }
+                        }
                     }
                 }
-                .pickerStyle(.navigationLink)
+                .padding(.vertical, 4)
             }
 
             Section("Your Feedback") {
@@ -139,10 +165,63 @@ struct FeedbackView: View {
     // MARK: - Submit
 
     private func submitFeedback() {
-        HapticService.notification(.success)
-        withAnimation {
-            submitted = true
+        let subject = "[\(selectedCategory.chipLabel)] MealSight Feedback"
+        let body = """
+        Rating: \(rating > 0 ? "\(rating)/5 stars" : "Not rated")
+        Category: \(selectedCategory.chipLabel)
+
+        \(message)
+
+        ---
+        MealSight v1.0 (6)
+        """
+
+        if let emailURL = createEmailURL(to: "nutrilenshealth@gmail.com", subject: subject, body: body) {
+            UIApplication.shared.open(emailURL) { success in
+                if success {
+                    HapticService.notification(.success)
+                    withAnimation { submitted = true }
+                }
+            }
+        } else {
+            showMailError = true
         }
+    }
+
+    private func createEmailURL(to email: String, subject: String, body: String) -> URL? {
+        let subjectEncoded = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let bodyEncoded = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return URL(string: "mailto:\(email)?subject=\(subjectEncoded)&body=\(bodyEncoded)")
+    }
+}
+
+// MARK: - Category Chip
+
+struct CategoryChip: View {
+    let label: String
+    let icon: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption2.weight(.semibold))
+                Text(label)
+                    .font(.caption.weight(.medium))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.nutriGreen.opacity(0.15) : Color(.systemGray6))
+            .foregroundStyle(isSelected ? .nutriGreen : .primary)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(isSelected ? Color.nutriGreen : Color.clear, lineWidth: 1.5)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

@@ -48,10 +48,18 @@ struct MealHistoryView: View {
             .searchable(text: $searchText, prompt: "Search meals")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ExportView()
-                    } label: {
-                        Image(systemName: "square.and.arrow.up")
+                    HStack(spacing: 16) {
+                        NavigationLink {
+                            ExportView()
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        NavigationLink {
+                            SettingsView()
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

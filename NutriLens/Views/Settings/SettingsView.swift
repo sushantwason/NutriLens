@@ -32,7 +32,10 @@ struct SettingsView: View {
             weightSection
             exportSection
             healthKitSection
+            achievementsSection
+            referralsSection
             feedbackSection
+            helpSection
             aboutSection
             if OwnerBypass.isOwnerDevice {
                 developerSection
@@ -289,6 +292,39 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Achievements
+
+    private var achievementsSection: some View {
+        Section("Achievements") {
+            NavigationLink {
+                AchievementsView()
+            } label: {
+                Label("Badges & Milestones", systemImage: "trophy.fill")
+            }
+        }
+    }
+
+    // MARK: - Referrals
+
+    private var referralsSection: some View {
+        Section("Referrals") {
+            Button {
+                shareReferralLink()
+            } label: {
+                Label("Refer a Friend", systemImage: "person.2.fill")
+            }
+        }
+    }
+
+    private func shareReferralLink() {
+        let shareText = "Check out MealSight — it scans your meals and instantly tells you the calories, protein, carbs, and fat! https://apps.apple.com/app/id6745208953"
+        let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(activityVC, animated: true)
+        }
+    }
+
     // MARK: - Feedback
 
     private var feedbackSection: some View {
@@ -310,6 +346,25 @@ struct SettingsView: View {
     private func requestAppStoreReview() {
         if let url = URL(string: "https://apps.apple.com/app/id6745208953?action=write-review") {
             UIApplication.shared.open(url)
+        }
+    }
+
+    // MARK: - Help & Onboarding
+
+    private var helpSection: some View {
+        Section("Help & Onboarding") {
+            NavigationLink {
+                AppTutorialView()
+            } label: {
+                Label("App Tutorial", systemImage: "book.fill")
+            }
+
+            Button {
+                UserDefaults.standard.set(false, forKey: "nutrilens.onboarding.completed")
+                HapticService.notification(.success)
+            } label: {
+                Label("Restart Onboarding", systemImage: "arrow.counterclockwise")
+            }
         }
     }
 
