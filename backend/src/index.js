@@ -378,26 +378,25 @@ function privacyPage() {
 <p>MealSight collects the following data to provide nutrition tracking and analysis:</p>
 <ul>
   <li><strong>Meal photos:</strong> Photos you take or select for AI-powered nutritional analysis, including single-photo and multi-photo meal scans, nutrition label scans, and recipe scans.</li>
-  <li><strong>Nutrition data:</strong> Calorie, macronutrient (protein, carbs, fat), and micronutrient (fiber, sugar, sodium, cholesterol, saturated fat, trans fat) information from your logged meals.</li>
+  <li><strong>Nutrition data:</strong> Calorie, macronutrient (protein, carbs, fat), and micronutrient (fiber, sugar, sodium, cholesterol, saturated fat, trans fat, vitamins, minerals) information from your logged meals.</li>
   <li><strong>Body profile:</strong> Optional height, weight, age, biological sex, and activity level used for daily goal and TDEE calculations.</li>
-  <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, halal, kosher) used for dietary alert detection.</li>
-  <li><strong>Health data:</strong> If you enable Apple Health integration, we read your weight and write dietary energy, protein, carbohydrates, fat, and water intake to Apple Health.</li>
-  <li><strong>Water intake:</strong> Glasses or milliliters of water you log daily.</li>
+  <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, shellfish-free, egg-free, soy-free, low sodium, halal, kosher) used for dietary alert detection and AI Coach suggestions.</li>
+  <li><strong>Health data:</strong> If you enable Apple Health integration, we read your weight and write dietary energy, protein, carbohydrates, and fat to Apple Health.</li>
   <li><strong>Feedback data:</strong> Accuracy ratings you provide on AI meal analysis results and any feedback you submit through the app.</li>
-  <li><strong>App preferences:</strong> Meal reminder times, notification settings, AI consent status, and display preferences stored locally.</li>
+  <li><strong>App preferences:</strong> Meal reminder times, notification settings, AI consent status, appearance preferences, and onboarding status stored locally.</li>
 </ul>
 
 <h2>2. How We Use Your Data</h2>
 <ul>
   <li><strong>AI Meal Analysis:</strong> When you scan a meal, nutrition label, or recipe, your photo is sent to Anthropic's Claude API for nutritional analysis. For multi-photo scans, multiple images are sent together. The images are processed to generate calorie and nutrient estimates, dietary flags, and a confidence score, then the results are returned to your device.</li>
   <li><strong>AI Coach:</strong> Your daily nutrition progress (calories, protein, carbs, fat, and their targets), current logging streak, time of day, and dietary restrictions are sent to Anthropic's Claude API to generate motivational tips, actionable advice, and meal suggestions. No photos or personal identifiers are included in coach requests.</li>
+  <li><strong>Barcode Lookup:</strong> When you scan a barcode, the barcode number is sent to the OpenFoodFacts API to retrieve product nutrition data. No personal data is included.</li>
   <li><strong>Text Food Search:</strong> Food search queries you type are sent to the USDA FoodData Central API to retrieve matching food items and their nutritional data. Only the search text is transmitted.</li>
   <li><strong>Smart Insights:</strong> Your meal history is analyzed locally on your device to generate nutrition insights, eating pattern analysis, macro balance reports, and goal suggestions. This analysis happens entirely on-device.</li>
-  <li><strong>Siri Shortcuts:</strong> If you use Siri Shortcuts (log water, today's summary, calories remaining), MealSight reads your local meal data to respond. No data is sent to external services through Siri.</li>
+  <li><strong>Siri Shortcuts:</strong> If you use Siri Shortcuts (today's summary, calories remaining), MealSight reads your local meal data to respond. No data is sent to external services through Siri.</li>
   <li><strong>Widgets:</strong> Home screen and lock screen widgets display your daily calorie and macro progress. Widget data is read from your local meal history and refreshed periodically.</li>
   <li><strong>Notifications:</strong> If you enable meal reminders, notification times are stored locally. Notifications are scheduled through Apple's local notification system and do not involve any external servers.</li>
-  <li><strong>Data Export:</strong> You can export your meal history as CSV or PDF files. Exported files are generated locally on your device and shared through the iOS share sheet.</li>
-  <li><strong>Local Storage:</strong> Your meal history, goals, body profile, achievements, streaks, and preferences are stored locally on your device using Apple's SwiftData framework.</li>
+  <li><strong>Local Storage:</strong> Your meal history, goals, body profile, weight log, achievements, streaks, and preferences are stored locally on your device using Apple's SwiftData framework.</li>
 </ul>
 
 <h2>3. Third-Party Data Sharing</h2>
@@ -405,17 +404,18 @@ function privacyPage() {
 <ul>
   <li><strong>Anthropic (Claude API):</strong> Receives meal/label/recipe photos (base64-encoded) for AI nutritional analysis, and receives daily nutrition progress summaries for AI coaching. Anthropic does not use API data to train AI models. Images are processed in real time and are not stored beyond what is needed to complete the request. See <a href="https://www.anthropic.com/privacy">Anthropic's Privacy Policy</a>.</li>
   <li><strong>USDA FoodData Central:</strong> Receives text search queries for food nutrition lookup. No personal data is included in these requests.</li>
+  <li><strong>OpenFoodFacts:</strong> Receives barcode numbers for product nutrition lookup. No personal data is included.</li>
   <li><strong>Apple (StoreKit):</strong> Processes in-app subscription purchases per Apple's policies.</li>
-  <li><strong>Apple (HealthKit):</strong> If you grant permission, MealSight writes dietary nutrients and water intake to Apple Health and reads your weight. This data exchange is governed by Apple's privacy policies.</li>
+  <li><strong>Apple (HealthKit):</strong> If you grant permission, MealSight writes dietary nutrients to Apple Health and reads your weight. This data exchange is governed by Apple's privacy policies.</li>
 </ul>
 <p>We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Health and fitness data is never used for advertising, marketing, or use-based data mining, in compliance with Apple's App Store guidelines.</p>
 <p>We do not use any third-party analytics, crash reporting, or tracking SDKs. No usage data is sent to external analytics services.</p>
 
 <h2>4. Data Storage and Security</h2>
 <ul>
-  <li>All personal data (meals, photos, goals, body profile, dietary restrictions, achievements, streaks) is stored locally on your device.</li>
+  <li>All personal data (meals, photos, goals, body profile, dietary restrictions, weight log, achievements, streaks) is stored locally on your device.</li>
   <li>Personal health information is not stored in iCloud.</li>
-  <li>All data transmitted to third-party APIs (Anthropic, USDA) uses HTTPS encryption in transit.</li>
+  <li>All data transmitted to third-party APIs (Anthropic, USDA, OpenFoodFacts) uses HTTPS encryption in transit.</li>
   <li>No user accounts are created — there are no passwords, emails, or credentials collected or stored.</li>
   <li>Meal photos are stored in the app's local data container and are not accessible to other apps.</li>
   <li>Feedback you submit is stored on our server with a random identifier only — no personal information is attached.</li>
@@ -436,7 +436,6 @@ function privacyPage() {
 <ul>
   <li>Access all your data (stored locally on your device).</li>
   <li>Delete your data at any time by removing meals or uninstalling the app.</li>
-  <li>Export your data in CSV or PDF format using the in-app Export feature.</li>
   <li>Opt out of AI analysis by not using the scan feature or withdrawing AI consent in Settings.</li>
   <li>Opt out of HealthKit integration by revoking permissions in iOS Settings.</li>
   <li>Disable notifications and Siri Shortcuts at any time.</li>
@@ -450,7 +449,7 @@ function privacyPage() {
 
 <h2>9. Contact</h2>
 <p>If you have questions about this Privacy Policy, contact us at:</p>
-<p><a href="mailto:support@mealsightapp.com">support@mealsightapp.com</a></p>
+<p><a href="mailto:nutrilenshealth@gmail.com">nutrilenshealth@gmail.com</a></p>
 `);
 }
 
@@ -462,14 +461,16 @@ function termsPage() {
 <p>MealSight is a nutrition tracking app that helps you understand your eating habits. The App provides:</p>
 <ul>
   <li><strong>AI Photo Analysis:</strong> Scan meals, nutrition labels, and recipes using your camera or photo library. Photos are analyzed by AI to estimate nutritional content. Supports single-photo and multi-photo meal scans.</li>
-  <li><strong>AI Coach:</strong> Personalized motivational tips, actionable nutrition advice, and meal suggestions based on your daily progress.</li>
-  <li><strong>Manual Tracking:</strong> Log meals via text-based food search powered by the USDA FoodData Central database.</li>
+  <li><strong>Barcode Scanning:</strong> Scan product barcodes to retrieve nutrition data from the OpenFoodFacts database.</li>
+  <li><strong>AI Coach:</strong> Personalized motivational tips, actionable nutrition advice, and meal suggestions based on your daily progress and dietary restrictions.</li>
+  <li><strong>Text Food Search:</strong> Search and log meals via the USDA FoodData Central database.</li>
   <li><strong>Smart Insights:</strong> On-device analysis of your eating patterns, macro balance, meal timing, and nutrition trends.</li>
-  <li><strong>Health Integration:</strong> Optional Apple Health sync for weight tracking and nutrition data sharing.</li>
-  <li><strong>Siri Shortcuts:</strong> Voice-activated commands to log water, check daily summaries, and view remaining calories.</li>
-  <li><strong>Widgets:</strong> Home screen and lock screen widgets showing daily nutrition progress.</li>
-  <li><strong>Data Export:</strong> Export your meal history in CSV or PDF format.</li>
+  <li><strong>Interactive Charts:</strong> Visualize your calorie and macronutrient trends over time with daily, weekly, and monthly views.</li>
   <li><strong>Dietary Alerts:</strong> Automatic detection of foods that may conflict with your dietary restrictions.</li>
+  <li><strong>Health Integration:</strong> Optional Apple Health sync for weight tracking and nutrition data sharing.</li>
+  <li><strong>Siri Shortcuts:</strong> Voice-activated commands to check daily summaries and view remaining calories.</li>
+  <li><strong>Widgets:</strong> Home screen and lock screen widgets showing daily nutrition progress.</li>
+  <li><strong>Achievements:</strong> Milestones and badges to track your nutrition logging progress and streaks.</li>
 </ul>
 
 <h2>2. Medical Disclaimer</h2>
@@ -481,7 +482,7 @@ function termsPage() {
 <p>The following features use artificial intelligence and produce AI-generated content:</p>
 <ul>
   <li><strong>Meal/label/recipe photo analysis</strong> — calorie and nutrient estimates, food item identification, dietary flag detection, and confidence scores.</li>
-  <li><strong>AI Coach</strong> — motivational messages, nutrition tips, and meal/recipe suggestions.</li>
+  <li><strong>AI Coach</strong> — motivational messages, nutrition tips, and meal/recipe suggestions tailored to your dietary restrictions.</li>
   <li><strong>Smart Insights</strong> — eating pattern analysis and goal suggestions (generated on-device).</li>
 </ul>
 <p>All AI-generated content is for informational and general wellness purposes only. It is not personalized medical or nutritional advice and does not account for your complete medical history, allergies, medication interactions, or individual nutritional needs. AI suggestions may occasionally be inaccurate or inappropriate — always use your own judgment.</p>
@@ -495,14 +496,14 @@ function termsPage() {
   <li>Image quality and lighting conditions</li>
   <li>Limitations of AI image recognition</li>
 </ul>
-<p>Nutrition label scanning accuracy depends on label legibility and image clarity. For precise nutritional information, refer to product nutrition labels or consult a registered dietitian.</p>
+<p>Nutrition label scanning accuracy depends on label legibility and image clarity. Barcode scanning accuracy depends on the completeness of the OpenFoodFacts database. For precise nutritional information, refer to product nutrition labels or consult a registered dietitian.</p>
 
 <h2>5. Dietary Alerts Disclaimer</h2>
 <p>Dietary alert detection (e.g., gluten, dairy, nuts, shellfish, soy, eggs) is based on AI analysis and keyword matching. It may not detect all allergens or dietary conflicts. <strong>Do not rely solely on MealSight for allergen detection.</strong> Always verify ingredients independently if you have food allergies or sensitivities.</p>
 
 <h2>6. Subscriptions</h2>
 <ul>
-  <li>MealSight offers optional subscription plans that unlock additional features.</li>
+  <li>MealSight offers an optional MealSight Pro subscription that unlocks unlimited scanning and all features.</li>
   <li>Payment is charged to your Apple ID account at confirmation of purchase.</li>
   <li>Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period.</li>
   <li>Your account will be charged for renewal within 24 hours prior to the end of the current period.</li>
@@ -518,6 +519,7 @@ function termsPage() {
 <ul>
   <li><strong>Anthropic (Claude API):</strong> Powers AI meal analysis and coaching. Governed by <a href="https://www.anthropic.com/terms">Anthropic's Terms</a>.</li>
   <li><strong>USDA FoodData Central:</strong> Provides food nutrition database for text search.</li>
+  <li><strong>OpenFoodFacts:</strong> Provides product nutrition data for barcode scanning.</li>
   <li><strong>Apple HealthKit:</strong> Optional health data integration, governed by Apple's terms.</li>
   <li><strong>Apple StoreKit:</strong> Processes subscription purchases, governed by Apple's terms.</li>
 </ul>
@@ -543,7 +545,7 @@ function termsPage() {
 
 <h2>13. Contact</h2>
 <p>Questions about these Terms? Contact us at:</p>
-<p><a href="mailto:support@mealsightapp.com">support@mealsightapp.com</a></p>
+<p><a href="mailto:nutrilenshealth@gmail.com">nutrilenshealth@gmail.com</a></p>
 `);
 }
 
