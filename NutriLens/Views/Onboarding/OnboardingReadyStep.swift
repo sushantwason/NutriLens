@@ -20,6 +20,10 @@ struct OnboardingReadyStep: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
+            // Widget suggestion
+            widgetSuggestionCard
+                .padding(.horizontal, 24)
+
             Spacer()
 
             Button(action: onFinish) {
@@ -36,5 +40,31 @@ struct OnboardingReadyStep: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 40)
         }
+    }
+
+    // MARK: - Widget Suggestion
+
+    private var widgetSuggestionCard: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "square.grid.2x2.fill")
+                .font(.title3)
+                .foregroundStyle(.nutriGreen)
+                .frame(width: 36, height: 36)
+                .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Add a Widget")
+                    .font(.subheadline.weight(.semibold))
+                Text("Track nutrition right from your home screen")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Tip: Add a MealSight widget to track nutrition from your home screen")
     }
 }
