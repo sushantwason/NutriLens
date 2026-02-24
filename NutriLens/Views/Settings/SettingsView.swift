@@ -31,6 +31,7 @@ struct SettingsView: View {
             profileSection
             dietaryRestrictionsSection
             mealRemindersSection
+            widgetsSection
             achievementsSection
             referralsSection
             feedbackSection
@@ -273,6 +274,35 @@ struct SettingsView: View {
             .accessibilityElement(children: .combine)
             .accessibilityValue(mealReminderManager.isEnabled ? "On" : "Off")
             .accessibilityHint("Configure meal reminder notifications")
+        }
+    }
+
+    // MARK: - Widgets
+
+    private var widgetsSection: some View {
+        Section("Widgets") {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Home & Lock Screen", systemImage: "square.grid.2x2.fill")
+                    .font(.subheadline.weight(.medium))
+
+                Text("Add MealSight widgets to see your daily calories and macros at a glance.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.nutriGreen)
+                    Text("Long-press home screen \u{2192} \u{FF0B} \u{2192} search MealSight")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(6)
+                .background(Color.nutriGreen.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Widgets: Add MealSight widgets to your home or lock screen")
+            .accessibilityHint("Long-press your home screen, tap plus, and search MealSight")
         }
     }
 

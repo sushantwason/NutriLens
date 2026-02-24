@@ -62,6 +62,9 @@ struct DashboardView: View {
                         onRefresh: { fetchCoachInsight() }
                     )
 
+                    // Widget upsell (dismissible)
+                    WidgetUpsellCard()
+
                     // Smart Insights link
                     smartInsightsLink
 
