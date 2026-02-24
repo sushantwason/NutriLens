@@ -14,6 +14,8 @@ struct NutritionEntry: TimelineEntry {
     let carbsTarget: Double
     let fat: Double
     let fatTarget: Double
+    let sugar: Double
+    let sugarTarget: Double
     let mealCount: Int
     let waterML: Double
     let waterTarget: Double
@@ -28,6 +30,8 @@ struct NutritionEntry: TimelineEntry {
         carbsTarget: 250,
         fat: 45,
         fatTarget: 65,
+        sugar: 30,
+        sugarTarget: 50,
         mealCount: 3,
         waterML: 1500,
         waterTarget: 2000
@@ -90,6 +94,7 @@ struct NutriLensTimelineProvider: TimelineProvider {
         let totalProtein = meals.reduce(0) { $0 + $1.totalProteinGrams }
         let totalCarbs = meals.reduce(0) { $0 + $1.totalCarbsGrams }
         let totalFat = meals.reduce(0) { $0 + $1.totalFatGrams }
+        let totalSugar = meals.reduce(0) { $0 + $1.totalSugarGrams }
 
         return NutritionEntry(
             date: Date(),
@@ -101,6 +106,8 @@ struct NutriLensTimelineProvider: TimelineProvider {
             carbsTarget: goal?.carbsGramsTarget ?? 250,
             fat: totalFat,
             fatTarget: goal?.fatGramsTarget ?? 65,
+            sugar: totalSugar,
+            sugarTarget: goal?.sugarGramsTarget ?? 50,
             mealCount: meals.count,
             waterML: waterML,
             waterTarget: goal?.waterTargetML ?? 2000

@@ -11,5 +11,6 @@ extension ShapeStyle where Self == Color {
     static var proteinColor: Color { .nutriBlue }
     static var carbsColor: Color { .nutriGreen }
     static var fatColor: Color { .nutriRed }
+    static var sugarColor: Color { .nutriPurple }
     static var waterColor: Color { .nutriBlue }
 }

@@ -138,7 +138,7 @@ struct RecipeAnalysisResultView: View {
                 nutrientRow("Carbs", ps.carbsGrams.oneDecimalString, "g", .carbsColor)
                 nutrientRow("Fat", ps.fatGrams.oneDecimalString, "g", .fatColor)
                 nutrientRow("Fiber", ps.fiberGrams.oneDecimalString, "g", .secondary)
-                nutrientRow("Sugar", ps.sugarGrams.oneDecimalString, "g", .secondary)
+                nutrientRow("Sugar", ps.sugarGrams.oneDecimalString, "g", .sugarColor)
             }
 
             // Feedback banner (shown after save)

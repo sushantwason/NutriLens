@@ -20,6 +20,7 @@ struct LockScreenRectangularView: View {
                 Text("P:\(String(format: "%.0f", entry.protein))g")
                 Text("C:\(String(format: "%.0f", entry.carbs))g")
                 Text("F:\(String(format: "%.0f", entry.fat))g")
+                Text("S:\(String(format: "%.0f", entry.sugar))g")
             }
             .font(.system(size: 9, weight: .medium))
             .foregroundStyle(.secondary)

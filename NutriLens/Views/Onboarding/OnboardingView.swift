@@ -21,6 +21,7 @@ struct OnboardingView: View {
     @State private var proteinTarget: Double = 150
     @State private var carbsTarget: Double = 250
     @State private var fatTarget: Double = 65
+    @State private var sugarTarget: Double = 50
 
     let onComplete: () -> Void
 
@@ -63,7 +64,8 @@ struct OnboardingView: View {
                 calorieTarget: $calorieTarget,
                 proteinTarget: $proteinTarget,
                 carbsTarget: $carbsTarget,
-                fatTarget: $fatTarget
+                fatTarget: $fatTarget,
+                sugarTarget: $sugarTarget
             ) {
                 withAnimation { currentPage = 4 }
             }
@@ -100,7 +102,8 @@ struct OnboardingView: View {
             calorieTarget: calorieTarget,
             proteinGramsTarget: proteinTarget,
             carbsGramsTarget: carbsTarget,
-            fatGramsTarget: fatTarget
+            fatGramsTarget: fatTarget,
+            sugarGramsTarget: sugarTarget
         )
         modelContext.insert(goal)
 

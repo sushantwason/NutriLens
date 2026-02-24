@@ -182,6 +182,7 @@ struct SettingsView: View {
                         goalRow("Protein", value: goal.proteinGramsTarget, unit: "g", color: .proteinColor)
                         goalRow("Carbs", value: goal.carbsGramsTarget, unit: "g", color: .carbsColor)
                         goalRow("Fat", value: goal.fatGramsTarget, unit: "g", color: .fatColor)
+                        goalRow("Sugar", value: goal.sugarGramsTarget, unit: "g", color: .sugarColor)
                     }
                 }
             } else {

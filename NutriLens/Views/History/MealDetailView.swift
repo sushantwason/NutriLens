@@ -151,6 +151,7 @@ struct MealDetailView: View {
             macroRingCard("Protein", meal.totalProteinGrams, .proteinColor)
             macroRingCard("Carbs", meal.totalCarbsGrams, .carbsColor)
             macroRingCard("Fat", meal.totalFatGrams, .fatColor)
+            macroRingCard("Sugar", meal.totalSugarGrams, .sugarColor)
         }
     }
 
@@ -269,6 +270,7 @@ struct MealDetailView: View {
                         macroTag("P", item.nutrients.proteinGrams, .proteinColor)
                         macroTag("C", item.nutrients.carbsGrams, .carbsColor)
                         macroTag("F", item.nutrients.fatGrams, .fatColor)
+                        macroTag("S", item.nutrients.sugarGrams, .sugarColor)
                     }
 
                     Text("\(item.nutrients.calories.calorieString)")
@@ -296,7 +298,6 @@ struct MealDetailView: View {
     private var secondaryNutrients: some View {
         HStack(spacing: 16) {
             secondaryNutrientPill("Fiber", meal.totalFiberGrams)
-            secondaryNutrientPill("Sugar", meal.totalSugarGrams)
         }
     }
 

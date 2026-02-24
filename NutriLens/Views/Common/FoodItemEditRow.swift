@@ -18,7 +18,7 @@ struct FoodItemEditRow: View {
                 nutrientField("Carbs", value: $item.carbsGrams, unit: "g", color: .carbsColor)
                 nutrientField("Fat", value: $item.fatGrams, unit: "g", color: .fatColor)
                 nutrientField("Fiber", value: $item.fiberGrams, unit: "g", color: .secondary)
-                nutrientField("Sugar", value: $item.sugarGrams, unit: "g", color: .secondary)
+                nutrientField("Sugar", value: $item.sugarGrams, unit: "g", color: .sugarColor)
             }
             .padding(.vertical, 4)
         } label: {
@@ -36,6 +36,7 @@ struct FoodItemEditRow: View {
                     macroBadge("P", item.proteinGrams, .proteinColor)
                     macroBadge("C", item.carbsGrams, .carbsColor)
                     macroBadge("F", item.fatGrams, .fatColor)
+                    macroBadge("S", item.sugarGrams, .sugarColor)
 
                     Text("\(item.calories.calorieString) kcal")
                         .font(.caption.weight(.semibold))

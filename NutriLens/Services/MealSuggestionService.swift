@@ -6,6 +6,7 @@ enum MealSuggestionService {
         let proteinGrams: Double
         let carbsGrams: Double
         let fatGrams: Double
+        let sugarGrams: Double
 
         var isComplete: Bool {
             calories <= 0 && proteinGrams <= 0 && carbsGrams <= 0 && fatGrams <= 0
@@ -17,7 +18,8 @@ enum MealSuggestionService {
             calories: max(0, goal.calorieTarget - todayTotals.calories),
             proteinGrams: max(0, goal.proteinGramsTarget - todayTotals.proteinGrams),
             carbsGrams: max(0, goal.carbsGramsTarget - todayTotals.carbsGrams),
-            fatGrams: max(0, goal.fatGramsTarget - todayTotals.fatGrams)
+            fatGrams: max(0, goal.fatGramsTarget - todayTotals.fatGrams),
+            sugarGrams: max(0, goal.sugarGramsTarget - todayTotals.sugarGrams)
         )
     }
 

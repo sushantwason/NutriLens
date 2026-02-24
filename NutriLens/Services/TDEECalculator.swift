@@ -6,6 +6,7 @@ enum TDEECalculator {
         let proteinGrams: Double
         let carbsGrams: Double
         let fatGrams: Double
+        let sugarGrams: Double
     }
 
     /// Mifflin-St Jeor Basal Metabolic Rate
@@ -28,6 +29,7 @@ enum TDEECalculator {
     /// - Protein: body weight × activity-based multiplier (g)
     /// - Fat: 25% of TDEE calories ÷ 9
     /// - Carbs: remaining calories ÷ 4
+    /// - Sugar: ~10% of total calories ÷ 4 (WHO guideline)
     static func recommendGoals(profile: UserProfile) -> GoalRecommendation {
         let totalCalories = tdee(profile: profile)
         let proteinGrams = profile.weightKG * profile.activityLevel.proteinMultiplier
@@ -36,12 +38,14 @@ enum TDEECalculator {
         let fatGrams = fatCalories / 9
         let carbsCalories = totalCalories - proteinCalories - fatCalories
         let carbsGrams = max(0, carbsCalories / 4)
+        let sugarGrams = (totalCalories * 0.10) / 4
 
         return GoalRecommendation(
             calories: totalCalories.rounded(),
             proteinGrams: proteinGrams.rounded(),
             carbsGrams: carbsGrams.rounded(),
-            fatGrams: fatGrams.rounded()
+            fatGrams: fatGrams.rounded(),
+            sugarGrams: sugarGrams.rounded()
         )
     }
 
@@ -51,5 +55,6 @@ enum TDEECalculator {
         goal.proteinGramsTarget = recommendation.proteinGrams
         goal.carbsGramsTarget = recommendation.carbsGrams
         goal.fatGramsTarget = recommendation.fatGrams
+        goal.sugarGramsTarget = recommendation.sugarGrams
     }
 }

@@ -35,7 +35,7 @@ struct MediumWidgetView: View {
             .frame(width: 86, height: 86)
 
             // Right: macro bars
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 macroBar(
                     label: "Protein",
                     value: entry.protein,
@@ -53,6 +53,12 @@ struct MediumWidgetView: View {
                     value: entry.fat,
                     target: entry.fatTarget,
                     color: .purple
+                )
+                macroBar(
+                    label: "Sugar",
+                    value: entry.sugar,
+                    target: entry.sugarTarget,
+                    color: .pink
                 )
 
                 HStack(spacing: 4) {

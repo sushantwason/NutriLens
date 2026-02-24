@@ -239,6 +239,15 @@ struct DashboardView: View {
                     target: goal?.fatGramsTarget ?? 65,
                     color: .fatColor
                 )
+
+                capsuleDivider
+
+                macroStat(
+                    title: "Sugar",
+                    value: todayTotals.sugarGrams,
+                    target: goal?.sugarGramsTarget ?? 50,
+                    color: .sugarColor
+                )
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
@@ -574,6 +583,7 @@ struct MealRowCard: View {
                         macroLabel("P", meal.totalProteinGrams, .proteinColor)
                         macroLabel("C", meal.totalCarbsGrams, .carbsColor)
                         macroLabel("F", meal.totalFatGrams, .fatColor)
+                        macroLabel("S", meal.totalSugarGrams, .sugarColor)
                     }
                 }
             }
@@ -583,7 +593,7 @@ struct MealRowCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(meal.name), \(meal.timestamp.shortTimeString)")
-        .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams")
+        .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams, sugar \(meal.totalSugarGrams.oneDecimalString) grams")
         .accessibilityHint("Opens meal details")
         .accessibilityAddTraits(.isButton)
         .offset(x: offset)

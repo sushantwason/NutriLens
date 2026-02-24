@@ -8,6 +8,7 @@ final class DailyGoal {
     var proteinGramsTarget: Double = 150
     var carbsGramsTarget: Double = 250
     var fatGramsTarget: Double = 65
+    var sugarGramsTarget: Double = 50
     var waterTargetML: Double = 2000
     var isActive: Bool = true
     var createdDate: Date = Date()
@@ -17,6 +18,7 @@ final class DailyGoal {
         proteinGramsTarget: Double = 150,
         carbsGramsTarget: Double = 250,
         fatGramsTarget: Double = 65,
+        sugarGramsTarget: Double = 50,
         waterTargetML: Double = 2000
     ) {
         self.id = UUID()
@@ -24,6 +26,7 @@ final class DailyGoal {
         self.proteinGramsTarget = proteinGramsTarget
         self.carbsGramsTarget = carbsGramsTarget
         self.fatGramsTarget = fatGramsTarget
+        self.sugarGramsTarget = sugarGramsTarget
         self.waterTargetML = waterTargetML
         self.isActive = true
         self.createdDate = Date()

@@ -20,6 +20,7 @@ struct GoalEditorView: View {
                         goal.proteinGramsTarget = rec.proteinGrams
                         goal.carbsGramsTarget = rec.carbsGrams
                         goal.fatGramsTarget = rec.fatGrams
+                        goal.sugarGramsTarget = rec.sugarGrams
                     } label: {
                         Label("Recalculate from Profile", systemImage: "arrow.triangle.2.circlepath")
                     }
@@ -63,6 +64,15 @@ struct GoalEditorView: View {
                     label: "Fat",
                     unit: "g",
                     color: .fatColor
+                )
+
+                sliderRow(
+                    value: $goal.sugarGramsTarget,
+                    range: 10...150,
+                    step: 5,
+                    label: "Sugar",
+                    unit: "g",
+                    color: .sugarColor
                 )
             }
 

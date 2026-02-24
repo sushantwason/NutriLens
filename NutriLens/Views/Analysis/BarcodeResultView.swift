@@ -130,7 +130,7 @@ struct BarcodeResultView: View {
                 nutrientRow("Carbs", viewModel.nutrients.carbsGrams.oneDecimalString, "g", .carbsColor)
                 nutrientRow("Fat", viewModel.nutrients.fatGrams.oneDecimalString, "g", .fatColor)
                 nutrientRow("Fiber", viewModel.nutrients.fiberGrams.oneDecimalString, "g", .secondary)
-                nutrientRow("Sugar", viewModel.nutrients.sugarGrams.oneDecimalString, "g", .secondary)
+                nutrientRow("Sugar", viewModel.nutrients.sugarGrams.oneDecimalString, "g", .sugarColor)
             }
 
             if viewModel.showFeedbackBanner {

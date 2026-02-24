@@ -5,6 +5,7 @@ struct OnboardingGoalStep: View {
     @Binding var proteinTarget: Double
     @Binding var carbsTarget: Double
     @Binding var fatTarget: Double
+    @Binding var sugarTarget: Double
     let onNext: () -> Void
 
     var body: some View {
@@ -53,6 +54,15 @@ struct OnboardingGoalStep: View {
                     step: 5,
                     unit: "g",
                     color: .fatColor
+                )
+
+                goalSlider(
+                    label: "Sugar",
+                    value: $sugarTarget,
+                    range: 10...150,
+                    step: 5,
+                    unit: "g",
+                    color: .sugarColor
                 )
 
                 Button(action: onNext) {

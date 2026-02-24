@@ -26,6 +26,7 @@ enum NutrientTrendSelection: String, CaseIterable, Identifiable {
     case protein = "Protein"
     case carbs = "Carbs"
     case fat = "Fat"
+    case sugar = "Sugar"
 
     var id: String { rawValue }
 
@@ -34,6 +35,7 @@ enum NutrientTrendSelection: String, CaseIterable, Identifiable {
         case .protein: return .proteinColor
         case .carbs: return .carbsColor
         case .fat: return .fatColor
+        case .sugar: return .sugarColor
         }
     }
 }
@@ -46,6 +48,7 @@ private struct DailyDataPoint: Identifiable {
     let protein: Double
     let carbs: Double
     let fat: Double
+    let sugar: Double
     let meals: [Meal]
 
     var id: Date { date }
@@ -214,6 +217,7 @@ struct InteractiveChartsView: View {
                 protein: dayMeals.reduce(0) { $0 + $1.totalProteinGrams },
                 carbs: dayMeals.reduce(0) { $0 + $1.totalCarbsGrams },
                 fat: dayMeals.reduce(0) { $0 + $1.totalFatGrams },
+                sugar: dayMeals.reduce(0) { $0 + $1.totalSugarGrams },
                 meals: dayMeals
             ))
         }
@@ -264,7 +268,8 @@ struct InteractiveChartsView: View {
             .chartForegroundStyleScale([
                 "Protein": Color.proteinColor,
                 "Carbs": Color.carbsColor,
-                "Fat": Color.fatColor
+                "Fat": Color.fatColor,
+                "Sugar": Color.sugarColor
             ])
             .chartLegend(position: .bottom, alignment: .center, spacing: 16)
             .chartXAxis {
@@ -571,7 +576,8 @@ struct InteractiveChartsView: View {
             [
                 MacroStackEntry(date: point.date, macro: "Protein", grams: point.protein),
                 MacroStackEntry(date: point.date, macro: "Carbs", grams: point.carbs),
-                MacroStackEntry(date: point.date, macro: "Fat", grams: point.fat)
+                MacroStackEntry(date: point.date, macro: "Fat", grams: point.fat),
+                MacroStackEntry(date: point.date, macro: "Sugar", grams: point.sugar)
             ]
         }
     }
@@ -581,6 +587,7 @@ struct InteractiveChartsView: View {
         case .protein: return point.protein
         case .carbs: return point.carbs
         case .fat: return point.fat
+        case .sugar: return point.sugar
         }
     }
 
@@ -589,6 +596,7 @@ struct InteractiveChartsView: View {
         case .protein: return goal.proteinGramsTarget
         case .carbs: return goal.carbsGramsTarget
         case .fat: return goal.fatGramsTarget
+        case .sugar: return goal.sugarGramsTarget
         }
     }
 
@@ -669,6 +677,7 @@ struct InteractiveChartsView: View {
                 avgProtein: weekMeals.reduce(0.0) { $0 + $1.totalProteinGrams } / Double(divisor),
                 avgCarbs: weekMeals.reduce(0.0) { $0 + $1.totalCarbsGrams } / Double(divisor),
                 avgFat: weekMeals.reduce(0.0) { $0 + $1.totalFatGrams } / Double(divisor),
+                avgSugar: weekMeals.reduce(0.0) { $0 + $1.totalSugarGrams } / Double(divisor),
                 totalMeals: weekMeals.count,
                 activeDays: activeDays
             )
@@ -703,6 +712,7 @@ struct InteractiveChartsView: View {
                 avgProtein: monthMeals.reduce(0.0) { $0 + $1.totalProteinGrams } / Double(divisor),
                 avgCarbs: monthMeals.reduce(0.0) { $0 + $1.totalCarbsGrams } / Double(divisor),
                 avgFat: monthMeals.reduce(0.0) { $0 + $1.totalFatGrams } / Double(divisor),
+                avgSugar: monthMeals.reduce(0.0) { $0 + $1.totalSugarGrams } / Double(divisor),
                 totalMeals: monthMeals.count,
                 activeDays: activeDays
             )
@@ -720,6 +730,7 @@ struct WeekBucket: Identifiable {
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
+    let avgSugar: Double
     let totalMeals: Int
     let activeDays: Int
 }
@@ -732,6 +743,7 @@ struct MonthBucket: Identifiable {
     let avgProtein: Double
     let avgCarbs: Double
     let avgFat: Double
+    let avgSugar: Double
     let totalMeals: Int
     let activeDays: Int
 }
@@ -824,6 +836,7 @@ private struct DayDetailSheet: View {
             macroRow(label: "Protein", grams: day.protein, target: goal?.proteinGramsTarget, color: .proteinColor)
             macroRow(label: "Carbs", grams: day.carbs, target: goal?.carbsGramsTarget, color: .carbsColor)
             macroRow(label: "Fat", grams: day.fat, target: goal?.fatGramsTarget, color: .fatColor)
+            macroRow(label: "Sugar", grams: day.sugar, target: goal?.sugarGramsTarget, color: .sugarColor)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -924,6 +937,8 @@ private struct DayDetailSheet: View {
                         .foregroundStyle(.carbsColor)
                     Text("F:\(meal.totalFatGrams.oneDecimalString)")
                         .foregroundStyle(.fatColor)
+                    Text("S:\(meal.totalSugarGrams.oneDecimalString)")
+                        .foregroundStyle(.sugarColor)
                 }
                 .font(.system(size: 9))
             }

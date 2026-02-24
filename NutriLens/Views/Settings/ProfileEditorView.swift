@@ -167,6 +167,7 @@ struct ProfileEditorView: View {
                         recommendedRow("Protein", value: rec.proteinGrams, unit: "g", color: .proteinColor)
                         recommendedRow("Carbs", value: rec.carbsGrams, unit: "g", color: .carbsColor)
                         recommendedRow("Fat", value: rec.fatGrams, unit: "g", color: .fatColor)
+                        recommendedRow("Sugar", value: rec.sugarGrams, unit: "g", color: .sugarColor)
                     }
 
                     if let goal {

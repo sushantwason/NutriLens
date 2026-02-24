@@ -197,6 +197,15 @@ struct MealAnalysisResultView: View {
                 unit: "F",
                 color: .fatColor
             )
+
+            Divider().frame(height: 28)
+
+            macroPill(
+                icon: nil,
+                value: viewModel.totalNutrients.sugarGrams.oneDecimalString,
+                unit: "S",
+                color: .sugarColor
+            )
         }
         .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
     }

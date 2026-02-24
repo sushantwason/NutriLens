@@ -8,6 +8,7 @@ enum NutritionCalculator {
         let totalProtein: Double
         let totalCarbs: Double
         let totalFat: Double
+        let totalSugar: Double
         let mealCount: Int
 
         var id: Date { date }
@@ -37,6 +38,7 @@ enum NutritionCalculator {
                 totalProtein: dayMeals.reduce(0) { $0 + $1.totalProteinGrams },
                 totalCarbs: dayMeals.reduce(0) { $0 + $1.totalCarbsGrams },
                 totalFat: dayMeals.reduce(0) { $0 + $1.totalFatGrams },
+                totalSugar: dayMeals.reduce(0) { $0 + $1.totalSugarGrams },
                 mealCount: dayMeals.count
             )
         }.reversed()

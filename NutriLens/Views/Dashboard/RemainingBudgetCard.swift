@@ -14,6 +14,7 @@ struct RemainingBudgetCard: View {
                 budgetPill("P", value: budget.proteinGrams, unit: "g", color: .proteinColor)
                 budgetPill("C", value: budget.carbsGrams, unit: "g", color: .carbsColor)
                 budgetPill("F", value: budget.fatGrams, unit: "g", color: .fatColor)
+                budgetPill("S", value: budget.sugarGrams, unit: "g", color: .sugarColor)
             }
 
             if let suggestion {

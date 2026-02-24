@@ -181,6 +181,7 @@ struct NutritionTrackingView: View {
         let totalProtein = summaries.reduce(0) { $0 + $1.totalProtein }
         let totalCarbs = summaries.reduce(0) { $0 + $1.totalCarbs }
         let totalFat = summaries.reduce(0) { $0 + $1.totalFat }
+        let totalSugar = summaries.reduce(0) { $0 + $1.totalSugar }
         let total = totalProtein + totalCarbs + totalFat
 
         return VStack(alignment: .leading, spacing: 10) {
@@ -205,6 +206,7 @@ struct NutritionTrackingView: View {
                         macroStatRow("Protein", grams: totalProtein, total: total, color: .proteinColor, target: goal?.proteinGramsTarget)
                         macroStatRow("Carbs", grams: totalCarbs, total: total, color: .carbsColor, target: goal?.carbsGramsTarget)
                         macroStatRow("Fat", grams: totalFat, total: total, color: .fatColor, target: goal?.fatGramsTarget)
+                        macroStatRow("Sugar", grams: totalSugar, total: total, color: .sugarColor, target: goal?.sugarGramsTarget)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

@@ -307,6 +307,7 @@ struct FavoriteCardView: View {
                 macroLabel("P", meal.totalProteinGrams, .proteinColor)
                 macroLabel("C", meal.totalCarbsGrams, .carbsColor)
                 macroLabel("F", meal.totalFatGrams, .fatColor)
+                macroLabel("S", meal.totalSugarGrams, .sugarColor)
             }
         }
         .padding(12)
