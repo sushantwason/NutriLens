@@ -198,12 +198,12 @@ struct SettingsView: View {
             Text(name)
                 .font(.subheadline)
             Spacer()
-            Text("\(value.oneDecimalString) \(unit)")
+            Text("\(value.wholeString) \(unit)")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(name): \(value.oneDecimalString) \(unit)")
+        .accessibilityLabel("\(name): \(value.wholeString) \(unit)")
     }
 
     // MARK: - Profile

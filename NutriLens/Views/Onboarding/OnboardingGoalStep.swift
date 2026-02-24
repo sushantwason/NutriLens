@@ -92,7 +92,7 @@ struct OnboardingGoalStep: View {
                 Circle().fill(color).frame(width: 8, height: 8)
                 Text(label)
                 Spacer()
-                Text("\(value.wrappedValue.oneDecimalString) \(unit)")
+                Text("\(value.wrappedValue.wholeString) \(unit)")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(color)
             }

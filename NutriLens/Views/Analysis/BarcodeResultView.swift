@@ -126,11 +126,11 @@ struct BarcodeResultView: View {
 
             Section("Nutrients") {
                 nutrientRow("Calories", viewModel.nutrients.calories.calorieString, "kcal", .calorieColor)
-                nutrientRow("Protein", viewModel.nutrients.proteinGrams.oneDecimalString, "g", .proteinColor)
-                nutrientRow("Carbs", viewModel.nutrients.carbsGrams.oneDecimalString, "g", .carbsColor)
-                nutrientRow("Fat", viewModel.nutrients.fatGrams.oneDecimalString, "g", .fatColor)
-                nutrientRow("Fiber", viewModel.nutrients.fiberGrams.oneDecimalString, "g", .secondary)
-                nutrientRow("Sugar", viewModel.nutrients.sugarGrams.oneDecimalString, "g", .sugarColor)
+                nutrientRow("Protein", viewModel.nutrients.proteinGrams.wholeString, "g", .proteinColor)
+                nutrientRow("Carbs", viewModel.nutrients.carbsGrams.wholeString, "g", .carbsColor)
+                nutrientRow("Fat", viewModel.nutrients.fatGrams.wholeString, "g", .fatColor)
+                nutrientRow("Fiber", viewModel.nutrients.fiberGrams.wholeString, "g", .secondary)
+                nutrientRow("Sugar", viewModel.nutrients.sugarGrams.wholeString, "g", .sugarColor)
             }
 
             if viewModel.showFeedbackBanner {

@@ -39,7 +39,7 @@ struct RemainingBudgetCard: View {
             Text(label)
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(.secondary)
-            Text(value.oneDecimalString)
+            Text(value.wholeString)
                 .font(.system(size: 14, weight: .bold, design: .rounded))
             Text(unit)
                 .font(.caption2)

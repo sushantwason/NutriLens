@@ -286,10 +286,10 @@ struct DashboardView: View {
             .frame(height: 4)
 
             HStack(spacing: 4) {
-                Text(value.oneDecimalString)
+                Text(value.wholeString)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
                     .foregroundStyle(color)
-                Text("/ \(target.oneDecimalString)g")
+                Text("/ \(target.wholeString)g")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.tertiary)
             }
@@ -302,7 +302,7 @@ struct DashboardView: View {
         .padding(.horizontal, 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
-        .accessibilityValue("\(value.oneDecimalString) of \(target.oneDecimalString) grams, \(Int(min(value / max(target, 1), 1.0) * 100)) percent")
+        .accessibilityValue("\(value.wholeString) of \(target.wholeString) grams, \(Int(min(value / max(target, 1), 1.0) * 100)) percent")
     }
 
     // MARK: - Scan + Search Buttons
@@ -601,7 +601,7 @@ struct MealRowCard: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(meal.name), \(meal.timestamp.shortTimeString)")
-        .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams, sugar \(meal.totalSugarGrams.oneDecimalString) grams")
+        .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.wholeString) grams, carbs \(meal.totalCarbsGrams.wholeString) grams, fat \(meal.totalFatGrams.wholeString) grams, sugar \(meal.totalSugarGrams.wholeString) grams")
         .accessibilityHint("Opens meal details")
         .accessibilityAddTraits(.isButton)
         .offset(x: offset)
@@ -658,7 +658,7 @@ struct MealRowCard: View {
     }
 
     private func macroLabel(_ letter: String, _ value: Double, _ color: Color) -> some View {
-        Text("\(letter):\(value.oneDecimalString)")
+        Text("\(letter):\(value.wholeString)")
             .font(.system(size: 10, weight: .medium, design: .rounded))
             .foregroundStyle(color)
     }

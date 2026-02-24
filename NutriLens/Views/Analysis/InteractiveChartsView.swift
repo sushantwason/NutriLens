@@ -850,11 +850,11 @@ private struct DayDetailSheet: View {
                 Text(label)
                     .font(.subheadline.weight(.medium))
                 Spacer()
-                Text(grams.oneDecimalString + "g")
+                Text(grams.wholeString + "g")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(color)
                 if let target = target {
-                    Text("/ \(target.oneDecimalString)g")
+                    Text("/ \(target.wholeString)g")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -931,13 +931,13 @@ private struct DayDetailSheet: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.calorieColor)
                 HStack(spacing: 4) {
-                    Text("P:\(meal.totalProteinGrams.oneDecimalString)")
+                    Text("P:\(meal.totalProteinGrams.wholeString)")
                         .foregroundStyle(.proteinColor)
-                    Text("C:\(meal.totalCarbsGrams.oneDecimalString)")
+                    Text("C:\(meal.totalCarbsGrams.wholeString)")
                         .foregroundStyle(.carbsColor)
-                    Text("F:\(meal.totalFatGrams.oneDecimalString)")
+                    Text("F:\(meal.totalFatGrams.wholeString)")
                         .foregroundStyle(.fatColor)
-                    Text("S:\(meal.totalSugarGrams.oneDecimalString)")
+                    Text("S:\(meal.totalSugarGrams.wholeString)")
                         .foregroundStyle(.sugarColor)
                 }
                 .font(.system(size: 9))

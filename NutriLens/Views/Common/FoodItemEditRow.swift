@@ -47,7 +47,7 @@ struct FoodItemEditRow: View {
     }
 
     private func macroBadge(_ letter: String, _ value: Double, _ color: Color) -> some View {
-        Text("\(letter):\(value.oneDecimalString)")
+        Text("\(letter):\(value.wholeString)")
             .font(.system(size: 10, weight: .medium, design: .rounded))
             .foregroundStyle(color)
     }

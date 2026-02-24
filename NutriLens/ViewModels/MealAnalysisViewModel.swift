@@ -64,7 +64,6 @@ final class MealAnalysisViewModel {
     var capturedImage: UIImage?
     var savedMeal: Meal?
     var showFeedbackBanner: Bool = false
-    var dietaryFlags: [String] = []
 
     private let visionService = ClaudeVisionService()
 
@@ -80,7 +79,6 @@ final class MealAnalysisViewModel {
             let response = try await visionService.analyzeMealPhoto(image)
             mealName = response.mealName
             confidenceScore = response.confidence
-            dietaryFlags = response.dietaryFlags ?? []
             foodItems = response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
             analysisState = .success
@@ -100,7 +98,6 @@ final class MealAnalysisViewModel {
             let response = try await visionService.analyzeMealPhotos(images)
             mealName = response.mealName
             confidenceScore = response.confidence
-            dietaryFlags = response.dietaryFlags ?? []
             foodItems = response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
             analysisState = .success
@@ -181,6 +178,5 @@ final class MealAnalysisViewModel {
         capturedImage = nil
         savedMeal = nil
         showFeedbackBanner = false
-        dietaryFlags = []
     }
 }

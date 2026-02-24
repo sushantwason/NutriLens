@@ -174,7 +174,7 @@ struct TextFoodSearchView: View {
 
     private func macroLabel(_ letter: String, value: Double, color: Color) -> some View {
         HStack(spacing: 1) {
-            Text(value.oneDecimalString)
+            Text(value.wholeString)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(color)
             Text(letter)

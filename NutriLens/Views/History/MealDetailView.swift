@@ -163,13 +163,13 @@ struct MealDetailView: View {
                 lineWidth: 5,
                 size: 44
             ) {
-                Text(grams.oneDecimalString)
+                Text(grams.wholeString)
                     .font(.system(size: 11, weight: .bold, design: .rounded))
             }
             Text(title)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-            Text("\(grams.oneDecimalString)g")
+            Text("\(grams.wholeString)g")
                 .font(.caption2.weight(.medium))
                 .foregroundStyle(color)
         }
@@ -285,7 +285,7 @@ struct MealDetailView: View {
     }
 
     private func macroTag(_ letter: String, _ value: Double, _ color: Color) -> some View {
-        Text("\(letter):\(value.oneDecimalString)")
+        Text("\(letter):\(value.wholeString)")
             .font(.system(size: 9, weight: .medium, design: .rounded))
             .foregroundStyle(color)
             .padding(.horizontal, 5)
@@ -306,7 +306,7 @@ struct MealDetailView: View {
             Text(name)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text("\(value.oneDecimalString)g")
+            Text("\(value.wholeString)g")
                 .font(.caption.weight(.semibold))
         }
         .frame(maxWidth: .infinity)

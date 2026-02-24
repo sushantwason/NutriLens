@@ -44,9 +44,9 @@ enum MealSuggestionService {
         let carbsRatio = carbsCalories / totalMacroCalories
 
         if proteinRatio > 0.45 {
-            return "You need \(budget.proteinGrams.oneDecimalString)g more protein — try chicken, Greek yogurt, or a protein shake."
+            return "You need \(budget.proteinGrams.wholeString)g more protein — try chicken, Greek yogurt, or a protein shake."
         } else if carbsRatio > 0.45 {
-            return "You need \(budget.carbsGrams.oneDecimalString)g more carbs — try oatmeal, rice, or a banana."
+            return "You need \(budget.carbsGrams.wholeString)g more carbs — try oatmeal, rice, or a banana."
         } else {
             return "You have \(budget.calories.calorieString) kcal left — try a balanced meal like a salad with grilled chicken."
         }

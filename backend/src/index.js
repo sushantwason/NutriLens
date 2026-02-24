@@ -32,13 +32,11 @@ const PROMPTS = {
 Also provide:
 - A suggested name for this meal
 - An overall confidence score (0.0 to 1.0) for your estimates
-- Dietary flags for common concerns (e.g. "contains gluten", "contains dairy", "contains nuts", "contains shellfish", "contains eggs", "contains soy", "high sodium", "not vegetarian", "not vegan")
 
 Respond ONLY with JSON in this exact format:
 {
   "mealName": "string",
   "confidence": 0.0,
-  "dietaryFlags": ["string"],
   "items": [
     {
       "name": "string",
@@ -97,14 +95,12 @@ Also provide:
 - A suggested name for this recipe
 - An overall confidence score (0.0 to 1.0) for your estimates
 - Estimated number of servings this recipe makes
-- Dietary flags for common concerns (e.g. "contains gluten", "contains dairy", "contains nuts", "contains shellfish", "contains eggs", "contains soy", "high sodium", "not vegetarian", "not vegan")
 
 Respond ONLY with JSON in this exact format:
 {
   "mealName": "string",
   "confidence": 0.0,
   "estimatedServings": 4,
-  "dietaryFlags": ["string"],
   "items": [
     {
       "name": "string",
@@ -564,7 +560,7 @@ function privacyPage() {
   <li><strong>Meal photos:</strong> Photos you take or select for AI-powered nutritional analysis, including single-photo and multi-photo meal scans, nutrition label scans, and recipe scans.</li>
   <li><strong>Nutrition data:</strong> Calorie, macronutrient (protein, carbs, fat), and micronutrient (fiber, sugar, sodium, cholesterol, saturated fat, trans fat, vitamins, minerals) information from your logged meals.</li>
   <li><strong>Body profile:</strong> Optional height, weight, age, biological sex, and activity level used for daily goal and TDEE calculations.</li>
-  <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, shellfish-free, egg-free, soy-free, low sodium, halal, kosher) used for dietary alert detection and AI Coach suggestions.</li>
+  <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, shellfish-free, egg-free, soy-free, low sodium, halal, kosher) used for AI Coach suggestions.</li>
   <li><strong>Health data:</strong> If you enable Apple Health integration, we read your weight and write dietary energy, protein, carbohydrates, and fat to Apple Health.</li>
   <li><strong>Feedback data:</strong> Accuracy ratings you provide on AI meal analysis results and any feedback you submit through the app.</li>
   <li><strong>App preferences:</strong> Meal reminder times, notification settings, AI consent status, appearance preferences, and onboarding status stored locally.</li>
@@ -572,7 +568,7 @@ function privacyPage() {
 
 <h2>2. How We Use Your Data</h2>
 <ul>
-  <li><strong>AI Meal Analysis:</strong> When you scan a meal, nutrition label, or recipe, your photo is sent to Anthropic's Claude API for nutritional analysis. For multi-photo scans, multiple images are sent together. The images are processed to generate calorie and nutrient estimates, dietary flags, and a confidence score, then the results are returned to your device.</li>
+  <li><strong>AI Meal Analysis:</strong> When you scan a meal, nutrition label, or recipe, your photo is sent to Anthropic's Claude API for nutritional analysis. For multi-photo scans, multiple images are sent together. The images are processed to generate calorie and nutrient estimates and a confidence score, then the results are returned to your device.</li>
   <li><strong>AI Coach:</strong> Your daily nutrition progress (calories, protein, carbs, fat, and their targets), current logging streak, time of day, and dietary restrictions are sent to Anthropic's Claude API to generate motivational tips, actionable advice, and meal suggestions. No photos or personal identifiers are included in coach requests.</li>
   <li><strong>Barcode Lookup:</strong> When you scan a barcode, the barcode number is sent to the OpenFoodFacts API to retrieve product nutrition data. No personal data is included.</li>
   <li><strong>Text Food Search:</strong> Food search queries you type are sent to the USDA FoodData Central API to retrieve matching food items and their nutritional data. Only the search text is transmitted.</li>
@@ -650,7 +646,6 @@ function termsPage() {
   <li><strong>Text Food Search:</strong> Search and log meals via the USDA FoodData Central database.</li>
   <li><strong>Smart Insights:</strong> On-device analysis of your eating patterns, macro balance, meal timing, and nutrition trends.</li>
   <li><strong>Interactive Charts:</strong> Visualize your calorie and macronutrient trends over time with daily, weekly, and monthly views.</li>
-  <li><strong>Dietary Alerts:</strong> Automatic detection of foods that may conflict with your dietary restrictions.</li>
   <li><strong>Health Integration:</strong> Optional Apple Health sync for weight tracking and nutrition data sharing.</li>
   <li><strong>Siri Shortcuts:</strong> Voice-activated commands to check daily summaries and view remaining calories.</li>
   <li><strong>Widgets:</strong> Home screen and lock screen widgets showing daily nutrition progress.</li>
@@ -665,7 +660,7 @@ function termsPage() {
 <h2>3. AI-Generated Content</h2>
 <p>The following features use artificial intelligence and produce AI-generated content:</p>
 <ul>
-  <li><strong>Meal/label/recipe photo analysis</strong> — calorie and nutrient estimates, food item identification, dietary flag detection, and confidence scores.</li>
+  <li><strong>Meal/label/recipe photo analysis</strong> — calorie and nutrient estimates, food item identification, and confidence scores.</li>
   <li><strong>AI Coach</strong> — motivational messages, nutrition tips, and meal/recipe suggestions tailored to your dietary restrictions.</li>
   <li><strong>Smart Insights</strong> — eating pattern analysis and goal suggestions (generated on-device).</li>
 </ul>
@@ -682,10 +677,7 @@ function termsPage() {
 </ul>
 <p>Nutrition label scanning accuracy depends on label legibility and image clarity. Barcode scanning accuracy depends on the completeness of the OpenFoodFacts database. For precise nutritional information, refer to product nutrition labels or consult a registered dietitian.</p>
 
-<h2>5. Dietary Alerts Disclaimer</h2>
-<p>Dietary alert detection (e.g., gluten, dairy, nuts, shellfish, soy, eggs) is based on AI analysis and keyword matching. It may not detect all allergens or dietary conflicts. <strong>Do not rely solely on MealSight for allergen detection.</strong> Always verify ingredients independently if you have food allergies or sensitivities.</p>
-
-<h2>6. Subscriptions</h2>
+<h2>5. Subscriptions</h2>
 <ul>
   <li>MealSight offers an optional MealSight Pro subscription that unlocks unlimited scanning and all features.</li>
   <li>Payment is charged to your Apple ID account at confirmation of purchase.</li>
@@ -695,10 +687,10 @@ function termsPage() {
   <li>Any unused portion of a free trial period will be forfeited upon purchase of a subscription.</li>
 </ul>
 
-<h2>7. No Professional Relationship</h2>
+<h2>6. No Professional Relationship</h2>
 <p>Use of MealSight does not create a physician-patient, dietitian-client, or any other professional-client relationship. The information provided through this App, including AI Coach suggestions and Smart Insights, is for general educational and informational purposes only.</p>
 
-<h2>8. Third-Party Services</h2>
+<h2>7. Third-Party Services</h2>
 <p>The App relies on the following third-party services:</p>
 <ul>
   <li><strong>Anthropic (Claude API):</strong> Powers AI meal analysis and coaching. Governed by <a href="https://www.anthropic.com/terms">Anthropic's Terms</a>.</li>
@@ -709,25 +701,24 @@ function termsPage() {
 </ul>
 <p>We are not responsible for the availability, accuracy, or policies of third-party services. If a third-party service is temporarily unavailable, affected features may not function until the service is restored.</p>
 
-<h2>9. Limitation of Liability</h2>
+<h2>8. Limitation of Liability</h2>
 <p>To the maximum extent permitted by law, MealSight and its developer shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the App, including but not limited to:</p>
 <ul>
   <li>Health outcomes based on nutritional estimates or AI suggestions</li>
-  <li>Allergic reactions from undetected dietary conflicts</li>
   <li>Data loss due to device failure or app removal</li>
   <li>Inaccurate nutritional data from AI analysis or database lookups</li>
 </ul>
 
-<h2>10. Acceptable Use</h2>
+<h2>9. Acceptable Use</h2>
 <p>You agree not to misuse the App, attempt to reverse engineer it, circumvent subscription restrictions, or use it for any purpose other than personal nutrition tracking and wellness.</p>
 
-<h2>11. Termination</h2>
+<h2>10. Termination</h2>
 <p>We reserve the right to terminate or suspend access to the App at any time for violation of these terms.</p>
 
-<h2>12. Changes to Terms</h2>
+<h2>11. Changes to Terms</h2>
 <p>We may update these Terms from time to time. Continued use of the App after changes constitutes acceptance of the new terms.</p>
 
-<h2>13. Contact</h2>
+<h2>12. Contact</h2>
 <p>Questions about these Terms? Contact us at:</p>
 <p><a href="mailto:nutrilenshealth@gmail.com">nutrilenshealth@gmail.com</a></p>
 `);

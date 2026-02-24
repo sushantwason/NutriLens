@@ -26,13 +26,10 @@ enum ClaudePrompts {
     - A suggested name for this meal
     - An overall confidence score (0.0 to 1.0) for your estimates
 
-    Also flag any common dietary concerns (e.g. "contains gluten", "contains dairy", "contains nuts", "contains shellfish", "contains eggs", "contains soy", "high sodium", "not vegetarian", "not vegan").
-
     Respond ONLY with JSON in this exact format:
     {
       "mealName": "string",
       "confidence": 0.0,
-      "dietaryFlags": ["string"],
       "items": [
         {
           "name": "string",
@@ -140,14 +137,12 @@ enum ClaudePrompts {
     - A suggested name for this recipe
     - An overall confidence score (0.0 to 1.0) for your estimates
     - Estimated number of servings this recipe makes
-    - Dietary flags (e.g. "contains gluten", "contains dairy", "contains nuts", "contains shellfish", "contains eggs", "contains soy", "high sodium", "not vegetarian", "not vegan")
 
     Respond ONLY with JSON in this exact format:
     {
       "mealName": "string",
       "confidence": 0.0,
       "estimatedServings": 4,
-      "dietaryFlags": ["string"],
       "items": [
         {
           "name": "string",

@@ -16,6 +16,11 @@ extension Double {
         String(format: "%.1f", self)
     }
 
+    /// Format as "13" rounded to nearest whole number — for macro display
+    var wholeString: String {
+        String(format: "%.0f", self)
+    }
+
     /// Format as "1500" (no decimals) for milliliters
     var mlString: String {
         String(format: "%.0f", self)

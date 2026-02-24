@@ -201,7 +201,7 @@ struct ProfileEditorView: View {
             Text(name)
                 .font(.subheadline)
             Spacer()
-            Text("\(value.oneDecimalString) \(unit)")
+            Text("\(value.wholeString) \(unit)")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
         }

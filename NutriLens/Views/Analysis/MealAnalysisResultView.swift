@@ -6,16 +6,6 @@ struct MealAnalysisResultView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(HealthKitManager.self) private var healthKitManager
-    @Query private var profiles: [UserProfile]
-
-    private var dietaryAlerts: [DietaryAlertChecker.Alert] {
-        DietaryAlertChecker.check(
-            items: viewModel.foodItems,
-            flags: viewModel.dietaryFlags,
-            restrictions: profiles.first?.dietaryRestrictions ?? []
-        )
-    }
-
     var body: some View {
         NavigationStack {
             Group {
@@ -114,13 +104,6 @@ struct MealAnalysisResultView: View {
                 }
             }
 
-            // Dietary alerts
-            if !dietaryAlerts.isEmpty {
-                Section {
-                    DietaryAlertBanner(alerts: dietaryAlerts)
-                }
-            }
-
             // Food items
             Section("Detected Foods") {
                 ForEach($viewModel.foodItems) { $item in
@@ -175,7 +158,7 @@ struct MealAnalysisResultView: View {
 
             macroPill(
                 icon: nil,
-                value: viewModel.totalNutrients.proteinGrams.oneDecimalString,
+                value: viewModel.totalNutrients.proteinGrams.wholeString,
                 unit: "P",
                 color: .proteinColor
             )
@@ -184,7 +167,7 @@ struct MealAnalysisResultView: View {
 
             macroPill(
                 icon: nil,
-                value: viewModel.totalNutrients.carbsGrams.oneDecimalString,
+                value: viewModel.totalNutrients.carbsGrams.wholeString,
                 unit: "C",
                 color: .carbsColor
             )
@@ -193,7 +176,7 @@ struct MealAnalysisResultView: View {
 
             macroPill(
                 icon: nil,
-                value: viewModel.totalNutrients.fatGrams.oneDecimalString,
+                value: viewModel.totalNutrients.fatGrams.wholeString,
                 unit: "F",
                 color: .fatColor
             )
@@ -202,7 +185,7 @@ struct MealAnalysisResultView: View {
 
             macroPill(
                 icon: nil,
-                value: viewModel.totalNutrients.sugarGrams.oneDecimalString,
+                value: viewModel.totalNutrients.sugarGrams.wholeString,
                 unit: "S",
                 color: .sugarColor
             )

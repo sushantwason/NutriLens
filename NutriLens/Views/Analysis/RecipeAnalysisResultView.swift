@@ -98,22 +98,6 @@ struct RecipeAnalysisResultView: View {
                 }
             }
 
-            // Dietary flags
-            if !viewModel.dietaryFlags.isEmpty {
-                Section("Dietary Flags") {
-                    FlowLayout(spacing: 6) {
-                        ForEach(viewModel.dietaryFlags, id: \.self) { flag in
-                            Text(flag)
-                                .font(.caption.weight(.medium))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(.nutriOrange, in: Capsule())
-                        }
-                    }
-                }
-            }
-
             // Ingredients
             Section("Ingredients (Full Recipe)") {
                 ForEach($viewModel.foodItems) { $item in
@@ -134,11 +118,11 @@ struct RecipeAnalysisResultView: View {
             Section("Nutrients Per Serving") {
                 let ps = viewModel.perServingNutrients
                 nutrientRow("Calories", ps.calories.calorieString, "kcal", .calorieColor)
-                nutrientRow("Protein", ps.proteinGrams.oneDecimalString, "g", .proteinColor)
-                nutrientRow("Carbs", ps.carbsGrams.oneDecimalString, "g", .carbsColor)
-                nutrientRow("Fat", ps.fatGrams.oneDecimalString, "g", .fatColor)
-                nutrientRow("Fiber", ps.fiberGrams.oneDecimalString, "g", .secondary)
-                nutrientRow("Sugar", ps.sugarGrams.oneDecimalString, "g", .sugarColor)
+                nutrientRow("Protein", ps.proteinGrams.wholeString, "g", .proteinColor)
+                nutrientRow("Carbs", ps.carbsGrams.wholeString, "g", .carbsColor)
+                nutrientRow("Fat", ps.fatGrams.wholeString, "g", .fatColor)
+                nutrientRow("Fiber", ps.fiberGrams.wholeString, "g", .secondary)
+                nutrientRow("Sugar", ps.sugarGrams.wholeString, "g", .sugarColor)
             }
 
             // Feedback banner (shown after save)

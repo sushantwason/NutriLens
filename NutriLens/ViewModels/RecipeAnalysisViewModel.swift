@@ -13,7 +13,6 @@ final class RecipeAnalysisViewModel {
     var savedMeal: Meal?
     var showFeedbackBanner: Bool = false
     var estimatedServings: Int = 1
-    var dietaryFlags: [String] = []
 
     private let visionService = ClaudeVisionService()
 
@@ -43,7 +42,6 @@ final class RecipeAnalysisViewModel {
             mealName = response.mealName
             confidenceScore = response.confidence
             estimatedServings = max(1, response.estimatedServings)
-            dietaryFlags = response.dietaryFlags ?? []
             foodItems = response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
             analysisState = .success
@@ -133,6 +131,5 @@ final class RecipeAnalysisViewModel {
         savedMeal = nil
         showFeedbackBanner = false
         estimatedServings = 1
-        dietaryFlags = []
     }
 }

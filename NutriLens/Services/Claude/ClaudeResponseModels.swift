@@ -3,7 +3,6 @@ import Foundation
 struct MealAnalysisResponse: Codable {
     let mealName: String
     let confidence: Double
-    let dietaryFlags: [String]?
     let items: [AnalyzedFoodItem]
 }
 
@@ -11,7 +10,6 @@ struct RecipeAnalysisResponse: Codable {
     let mealName: String
     let confidence: Double
     let estimatedServings: Int
-    let dietaryFlags: [String]?
     let items: [AnalyzedFoodItem]
 }
 
