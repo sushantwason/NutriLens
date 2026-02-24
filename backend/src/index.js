@@ -1,6 +1,8 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL_SONNET = "claude-sonnet-4-20250514";
+const MODEL_HAIKU = "claude-haiku-4-5-20251001";
+const DAILY_SONNET_LIMIT = 15;
 
 const PROMPTS = {
   meal: {
@@ -147,10 +149,37 @@ function corsHeaders() {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-App-Token",
+    "Access-Control-Expose-Headers": "X-Model-Used",
   };
 }
 
-async function handleAnalyze(body, env) {
+function getSonnetKey(request) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const date = new Date().toISOString().slice(0, 10);
+  return `sonnet:${ip}:${date}`;
+}
+
+async function canUseSonnet(request, env) {
+  try {
+    const key = getSonnetKey(request);
+    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    return count < DAILY_SONNET_LIMIT;
+  } catch {
+    return true; // fail-open: allow Sonnet if KV is unavailable
+  }
+}
+
+async function incrementSonnetUsage(request, env) {
+  try {
+    const key = getSonnetKey(request);
+    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 86400 });
+  } catch {
+    // best-effort; don't block the request if KV write fails
+  }
+}
+
+async function handleAnalyze(request, body, env) {
   const { type, image, mediaType, images } = body;
 
   // Support both single image (image/mediaType) and multi-image (images array)
@@ -182,6 +211,13 @@ async function handleAnalyze(body, env) {
     );
   }
 
+  // Select model: Sonnet for meal/recipe (visual), Haiku for label (text OCR)
+  let model = MODEL_HAIKU;
+  if (type === "meal" || type === "recipe") {
+    const useSonnet = await canUseSonnet(request, env);
+    model = useSonnet ? MODEL_SONNET : MODEL_HAIKU;
+  }
+
   // Build content blocks: one image block per photo, then the text prompt
   const contentBlocks = imageEntries.map((entry) => ({
     type: "image",
@@ -197,7 +233,7 @@ async function handleAnalyze(body, env) {
   });
 
   const anthropicBody = {
-    model: MODEL,
+    model,
     max_tokens: 2048,
     system: prompt.system,
     messages: [
@@ -221,9 +257,17 @@ async function handleAnalyze(body, env) {
 
     const responseData = await anthropicResponse.json();
 
+    // Track Sonnet usage after successful response
+    if (model === MODEL_SONNET) {
+      await incrementSonnetUsage(request, env);
+    }
+
+    const headers = corsHeaders();
+    headers["X-Model-Used"] = model;
+
     return Response.json(responseData, {
       status: anthropicResponse.status,
-      headers: corsHeaders(),
+      headers,
     });
   } catch (err) {
     return Response.json(
@@ -258,7 +302,7 @@ async function handleCoach(body, env) {
   });
 
   const anthropicBody = {
-    model: MODEL,
+    model: MODEL_HAIKU,
     max_tokens: 256,
     system: COACH_PROMPT.system,
     messages: [
@@ -282,9 +326,12 @@ async function handleCoach(body, env) {
 
     const responseData = await anthropicResponse.json();
 
+    const headers = corsHeaders();
+    headers["X-Model-Used"] = MODEL_HAIKU;
+
     return Response.json(responseData, {
       status: anthropicResponse.status,
-      headers: corsHeaders(),
+      headers,
     });
   } catch (err) {
     return Response.json(
@@ -594,7 +641,7 @@ export default {
 
     // Route to handler
     if (url.pathname === "/api/analyze") {
-      return handleAnalyze(body, env);
+      return handleAnalyze(request, body, env);
     } else if (url.pathname === "/api/coach") {
       return handleCoach(body, env);
     } else if (url.pathname === "/api/feedback") {

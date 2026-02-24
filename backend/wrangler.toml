@@ -9,3 +9,7 @@ compatibility_date = "2024-12-01"
 [[kv_namespaces]]
 binding = "FEEDBACK"
 id = "13451d365fe8477a8b4e2f44f0c16315"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "47a708cc46f34176ada52d9f1cb1feb6"
