@@ -296,8 +296,7 @@ struct FavoriteCardView: View {
 
             Text(meal.name)
                 .font(.subheadline.weight(.medium))
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
 
             Text("\(meal.totalCalories.calorieString) kcal")
                 .font(.caption.weight(.bold))
@@ -311,7 +310,7 @@ struct FavoriteCardView: View {
             }
         }
         .padding(12)
-        .frame(width: 140)
+        .frame(width: 140, height: 145)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(meal.name), \(meal.totalCalories.calorieString) kilocalories")

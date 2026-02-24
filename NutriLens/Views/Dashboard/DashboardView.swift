@@ -176,10 +176,7 @@ struct DashboardView: View {
                 SettingsView()
             } label: {
                 Image(systemName: "gearshape.fill")
-                    .font(.body)
                     .foregroundStyle(.secondary)
-                    .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial, in: Circle())
             }
             .accessibilityLabel("Settings")
             .accessibilityHint("Opens app settings")

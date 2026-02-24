@@ -413,7 +413,7 @@ struct SettingsView: View {
                 let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
                 return "\(version) (\(build))"
             }())
-            LabeledContent("AI Model", value: "Claude Haiku")
+            LabeledContent("AI Model", value: "Claude Sonnet & Haiku")
 
             NavigationLink {
                 DisclaimersView()
