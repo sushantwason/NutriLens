@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 enum BarcodeState: Equatable {
     case scanning
@@ -17,6 +18,7 @@ final class BarcodeViewModel {
     var brandName: String = ""
     var servingSize: String = ""
     var nutrients: NutrientInfo = .zero
+    var imageURL: String?
     var mealType: MealType = .suggestedForCurrentTime
     var showFeedbackBanner: Bool = false
     var savedMeal: Meal?
@@ -31,6 +33,7 @@ final class BarcodeViewModel {
             brandName = result.brandName ?? ""
             servingSize = result.servingSize
             nutrients = result.nutrients
+            imageURL = result.imageURL
             state = .found
         } catch OpenFoodFactsError.productNotFound {
             state = .notFound
@@ -43,7 +46,8 @@ final class BarcodeViewModel {
         let meal = Meal(
             name: productName,
             mealType: mealType,
-            sourceType: .barcode
+            sourceType: .barcode,
+            photoData: downloadedImageData
         )
 
         let foodItem = FoodItem(
@@ -66,6 +70,23 @@ final class BarcodeViewModel {
         }
     }
 
+    /// Downloads and compresses the product image for storage.
+    /// Called when the barcode result is displayed so the image is ready when the user saves.
+    func downloadProductImage() async {
+        guard let urlString = imageURL,
+              let url = URL(string: urlString) else { return }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let uiImage = UIImage(data: data) else { return }
+            downloadedImageData = ImageProcessor.compressForStorage(uiImage)
+        } catch {
+            // Image download failed — not critical, meal saves without photo
+        }
+    }
+
+    private(set) var downloadedImageData: Data?
+
     func rateAccuracy(_ rating: Int, context: ModelContext) {
         savedMeal?.userAccuracyRating = rating
         try? context.save()
@@ -79,6 +100,8 @@ final class BarcodeViewModel {
         brandName = ""
         servingSize = ""
         nutrients = .zero
+        imageURL = nil
+        downloadedImageData = nil
         mealType = .suggestedForCurrentTime
         showFeedbackBanner = false
         savedMeal = nil
