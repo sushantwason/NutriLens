@@ -30,7 +30,7 @@ struct SettingsView: View {
             dailyGoalsSection
             profileSection
             dietaryRestrictionsSection
-            healthSection
+            weightLogSection
             mealRemindersSection
             widgetsSection
             achievementsSection
@@ -258,16 +258,10 @@ struct SettingsView: View {
         return restrictions.isEmpty ? "None" : restrictions.map(\.displayName).joined(separator: ", ")
     }
 
-    // MARK: - Health
+    // MARK: - Weight Log
 
-    private var healthSection: some View {
+    private var weightLogSection: some View {
         Section("Health") {
-            NavigationLink {
-                HealthKitSettingsView()
-            } label: {
-                Label("Apple Health Sync", systemImage: "heart.fill")
-            }
-
             NavigationLink {
                 WeightLogView()
             } label: {

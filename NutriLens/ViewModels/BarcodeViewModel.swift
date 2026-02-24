@@ -43,7 +43,7 @@ final class BarcodeViewModel {
         }
     }
 
-    func saveMeal(context: ModelContext, healthKitManager: HealthKitManager? = nil) {
+    func saveMeal(context: ModelContext) {
         let meal = Meal(
             name: productName,
             mealType: mealType,
@@ -73,9 +73,6 @@ final class BarcodeViewModel {
 
         WidgetCenter.shared.reloadAllTimelines()
 
-        if let hk = healthKitManager {
-            Task { await hk.syncMeal(meal) }
-        }
     }
 
     /// Downloads and compresses the product image for storage.

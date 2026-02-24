@@ -58,7 +58,7 @@ final class RecipeAnalysisViewModel {
         foodItems.remove(atOffsets: offsets)
     }
 
-    func saveMeal(context: ModelContext, healthKitManager: HealthKitManager? = nil) {
+    func saveMeal(context: ModelContext) {
         let photoData = capturedImage.flatMap { ImageProcessor.compressForStorage($0) }
 
         let meal = Meal(
@@ -106,9 +106,6 @@ final class RecipeAnalysisViewModel {
         HapticService.mealSaved()
         WidgetCenter.shared.reloadAllTimelines()
 
-        if let hk = healthKitManager {
-            Task { await hk.syncMeal(meal) }
-        }
     }
 
     func rateAccuracy(_ rating: Int, context: ModelContext) {

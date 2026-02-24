@@ -24,6 +24,7 @@ struct DashboardView: View {
     // Cached streak values to avoid expensive recalculation on every render
     @State private var cachedCurrentStreak: Int = 0
     @State private var cachedLongestStreak: Int = 0
+    @State private var cachedScanStreak: Int = 0
 
     private var todaysMeals: [Meal] {
         let start = Date().startOfDay
@@ -119,6 +120,7 @@ struct DashboardView: View {
         let meals = Array(allMeals)
         cachedCurrentStreak = StreakManager.currentStreakLength(meals: meals, goal: goal)
         cachedLongestStreak = StreakManager.longestStreak(meals: meals, goal: goal)
+        cachedScanStreak = StreakManager.currentScanStreak(meals: meals)
     }
 
     // MARK: - Branded Header Card
@@ -158,17 +160,17 @@ struct DashboardView: View {
 
             Spacer()
 
-            // Streak counter (compact)
+            // Scan streak counter (compact)
             HStack(spacing: 4) {
                 Image(systemName: "flame.fill")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(cachedCurrentStreak > 0 ? .nutriOrange : .secondary)
-                Text("\(cachedCurrentStreak)")
+                    .foregroundStyle(cachedScanStreak > 0 ? .nutriOrange : .secondary)
+                Text("\(cachedScanStreak)")
                     .font(.subheadline.weight(.bold))
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Current streak")
-            .accessibilityValue("\(cachedCurrentStreak) \(cachedCurrentStreak == 1 ? "day" : "days")")
+            .accessibilityLabel("Logging streak")
+            .accessibilityValue("\(cachedScanStreak) \(cachedScanStreak == 1 ? "day" : "days")")
 
             NavigationLink {
                 SettingsView()
@@ -669,6 +671,5 @@ struct MealRowCard: View {
         .modelContainer(for: [Meal.self, DailyGoal.self, WaterEntry.self, WeightEntry.self, UserProfile.self], inMemory: true)
         .environment(SubscriptionManager())
         .environment(TrialManager())
-        .environment(HealthKitManager())
         .environment(ScanCounter())
 }

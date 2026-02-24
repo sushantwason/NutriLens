@@ -5,6 +5,8 @@ struct MealDetailView: View {
     let meal: Meal
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
+    @State private var showShareSheet = false
+    @State private var shareImage: UIImage?
     @State private var editedName = ""
 
     var body: some View {
@@ -49,6 +51,25 @@ struct MealDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 HStack(spacing: 16) {
                     Button {
+                        let photo = meal.photoData.flatMap { UIImage(data: $0) }
+                        let card = MealShareCardView(
+                            mealName: meal.name,
+                            calories: meal.totalCalories,
+                            protein: meal.totalProteinGrams,
+                            carbs: meal.totalCarbsGrams,
+                            fat: meal.totalFatGrams,
+                            sugar: meal.totalSugarGrams,
+                            mealTypeIcon: meal.mealType.icon,
+                            mealPhoto: photo
+                        )
+                        shareImage = card.renderImage()
+                        showShareSheet = shareImage != nil
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button {
                         editedName = meal.name
                         showEditSheet = true
                     } label: {
@@ -92,6 +113,11 @@ struct MealDetailView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let image = shareImage {
+                ShareSheetView(items: [image])
+            }
         }
     }
 

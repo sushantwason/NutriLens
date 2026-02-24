@@ -6,7 +6,6 @@ import WidgetKit
 struct NutriLensApp: App {
     @State private var subscriptionManager = SubscriptionManager()
     @State private var trialManager = TrialManager()
-    @State private var healthKitManager = HealthKitManager()
     @State private var scanCounter = ScanCounter()
     @State private var mealReminderManager = MealReminderManager()
     @Environment(\.scenePhase) private var scenePhase
@@ -25,7 +24,6 @@ struct NutriLensApp: App {
             ContentView()
                 .environment(subscriptionManager)
                 .environment(trialManager)
-                .environment(healthKitManager)
                 .environment(scanCounter)
                 .environment(mealReminderManager)
                 .onChange(of: scenePhase) { _, newPhase in
@@ -37,6 +35,8 @@ struct NutriLensApp: App {
                     // Prune photo blobs from meals older than 90 days to limit storage growth
                     let context = ModelContext(modelContainer)
                     Meal.pruneOldPhotos(context: context)
+                    // Schedule weekly summary notification with latest stats
+                    WeeklySummaryNotifier.scheduleIfNeeded(container: modelContainer)
                 }
         }
         .modelContainer(modelContainer)

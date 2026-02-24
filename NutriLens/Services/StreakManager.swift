@@ -82,6 +82,52 @@ enum StreakManager {
         return streak
     }
 
+    // MARK: - Scan Streak (any meal logged per day)
+
+    /// Current consecutive days with at least one meal logged (lower bar than goal streak).
+    static func currentScanStreak(meals: [Meal]) -> Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let daysWithMeals = Set(meals.map { calendar.startOfDay(for: $0.timestamp) })
+        var streak = 0
+
+        // Check today first — if the user logged today, count it
+        if daysWithMeals.contains(today) { streak += 1 }
+
+        // Walk backwards from yesterday
+        guard var checkDate = calendar.date(byAdding: .day, value: -1, to: today) else { return streak }
+        for _ in 0..<365 {
+            guard daysWithMeals.contains(checkDate) else { break }
+            streak += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
+            checkDate = prev
+        }
+        return streak
+    }
+
+    /// Longest-ever consecutive days with at least one meal logged.
+    static func longestScanStreak(meals: [Meal]) -> Int {
+        guard let earliest = meals.map(\.timestamp).min() else { return 0 }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let daysWithMeals = Set(meals.map { calendar.startOfDay(for: $0.timestamp) })
+        var date = calendar.startOfDay(for: earliest)
+        var longest = 0
+        var current = 0
+
+        while date <= today {
+            if daysWithMeals.contains(date) {
+                current += 1
+                longest = max(longest, current)
+            } else {
+                current = 0
+            }
+            guard let next = calendar.date(byAdding: .day, value: 1, to: date) else { break }
+            date = next
+        }
+        return longest
+    }
+
     /// Compute longest streak ever using O(n) pre-grouping
     static func longestStreak(meals: [Meal], goal: DailyGoal) -> Int {
         guard let earliest = meals.map(\.timestamp).min() else { return 0 }

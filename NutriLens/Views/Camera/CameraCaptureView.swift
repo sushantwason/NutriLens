@@ -521,5 +521,4 @@ struct CameraCaptureView: View {
         .environment(SubscriptionManager())
         .environment(TrialManager())
         .environment(ScanCounter())
-        .environment(HealthKitManager())
 }

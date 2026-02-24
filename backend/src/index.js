@@ -561,7 +561,6 @@ function privacyPage() {
   <li><strong>Nutrition data:</strong> Calorie, macronutrient (protein, carbs, fat), and micronutrient (fiber, sugar, sodium, cholesterol, saturated fat, trans fat, vitamins, minerals) information from your logged meals.</li>
   <li><strong>Body profile:</strong> Optional height, weight, age, biological sex, and activity level used for daily goal and TDEE calculations.</li>
   <li><strong>Dietary preferences:</strong> Dietary restrictions you set (e.g., vegetarian, vegan, gluten-free, dairy-free, nut-free, shellfish-free, egg-free, soy-free, low sodium, halal, kosher) used for AI Coach suggestions.</li>
-  <li><strong>Health data:</strong> If you enable Apple Health integration, we read your weight and write dietary energy, protein, carbohydrates, and fat to Apple Health.</li>
   <li><strong>Feedback data:</strong> Accuracy ratings you provide on AI meal analysis results and any feedback you submit through the app.</li>
   <li><strong>App preferences:</strong> Meal reminder times, notification settings, AI consent status, appearance preferences, and onboarding status stored locally.</li>
 </ul>
@@ -586,7 +585,6 @@ function privacyPage() {
   <li><strong>USDA FoodData Central:</strong> Receives text search queries for food nutrition lookup. No personal data is included in these requests.</li>
   <li><strong>OpenFoodFacts:</strong> Receives barcode numbers for product nutrition lookup. No personal data is included.</li>
   <li><strong>Apple (StoreKit):</strong> Processes in-app subscription purchases per Apple's policies.</li>
-  <li><strong>Apple (HealthKit):</strong> If you grant permission, MealSight writes dietary nutrients to Apple Health and reads your weight. This data exchange is governed by Apple's privacy policies.</li>
 </ul>
 <p>We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Health and fitness data is never used for advertising, marketing, or use-based data mining, in compliance with Apple's App Store guidelines.</p>
 <p>We do not use any third-party analytics, crash reporting, or tracking SDKs. No usage data is sent to external analytics services.</p>
@@ -607,7 +605,6 @@ function privacyPage() {
   <li>Delete individual meals by swiping to delete in the app.</li>
   <li>Delete all app data by uninstalling MealSight from your device.</li>
   <li>Photos sent for AI analysis are processed in real time and not retained by Anthropic beyond the API request.</li>
-  <li>Revoke HealthKit permissions at any time through iOS Settings > Health > Data Access.</li>
   <li>Withdraw AI consent at any time in the app's Settings, which will prevent further photo analysis.</li>
 </ul>
 
@@ -617,7 +614,6 @@ function privacyPage() {
   <li>Access all your data (stored locally on your device).</li>
   <li>Delete your data at any time by removing meals or uninstalling the app.</li>
   <li>Opt out of AI analysis by not using the scan feature or withdrawing AI consent in Settings.</li>
-  <li>Opt out of HealthKit integration by revoking permissions in iOS Settings.</li>
   <li>Disable notifications and Siri Shortcuts at any time.</li>
 </ul>
 
@@ -646,7 +642,6 @@ function termsPage() {
   <li><strong>Text Food Search:</strong> Search and log meals via the USDA FoodData Central database.</li>
   <li><strong>Smart Insights:</strong> On-device analysis of your eating patterns, macro balance, meal timing, and nutrition trends.</li>
   <li><strong>Interactive Charts:</strong> Visualize your calorie and macronutrient trends over time with daily, weekly, and monthly views.</li>
-  <li><strong>Health Integration:</strong> Optional Apple Health sync for weight tracking and nutrition data sharing.</li>
   <li><strong>Siri Shortcuts:</strong> Voice-activated commands to check daily summaries and view remaining calories.</li>
   <li><strong>Widgets:</strong> Home screen and lock screen widgets showing daily nutrition progress.</li>
   <li><strong>Achievements:</strong> Milestones and badges to track your nutrition logging progress and streaks.</li>
@@ -696,7 +691,6 @@ function termsPage() {
   <li><strong>Anthropic (Claude API):</strong> Powers AI meal analysis and coaching. Governed by <a href="https://www.anthropic.com/terms">Anthropic's Terms</a>.</li>
   <li><strong>USDA FoodData Central:</strong> Provides food nutrition database for text search.</li>
   <li><strong>OpenFoodFacts:</strong> Provides product nutrition data for barcode scanning.</li>
-  <li><strong>Apple HealthKit:</strong> Optional health data integration, governed by Apple's terms.</li>
   <li><strong>Apple StoreKit:</strong> Processes subscription purchases, governed by Apple's terms.</li>
 </ul>
 <p>We are not responsible for the availability, accuracy, or policies of third-party services. If a third-party service is temporarily unavailable, affected features may not function until the service is restored.</p>

@@ -6,7 +6,6 @@ struct WeightLogView: View {
     @Query(sort: \WeightEntry.date) private var weightEntries: [WeightEntry]
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
-    @Environment(HealthKitManager.self) private var healthKitManager
 
     @State private var newWeight: Double = 70
     @State private var showAddConfirmation = false
@@ -73,25 +72,10 @@ struct WeightLogView: View {
                 }
             }
 
-            // MARK: - Import from Health
-            if healthKitManager.isAvailable {
-                Section("Apple Health") {
-                    Button {
-                        Task {
-                            if let weight = await healthKitManager.fetchLatestWeight() {
-                                newWeight = weight
-                            }
-                        }
-                    } label: {
-                        Label("Import Latest Weight from Health", systemImage: "heart.fill")
-                    }
-                }
-            }
-
             // MARK: - History
             if !weightEntries.isEmpty {
                 Section("History") {
-                    ForEach(weightEntries.reversed().prefix(20)) { entry in
+                    ForEach(Array(weightEntries.suffix(20).reversed())) { entry in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(entry.weightKG.oneDecimalString) kg")
@@ -102,16 +86,6 @@ struct WeightLogView: View {
                             }
 
                             Spacer()
-
-                            Text(entry.source == .healthkit ? "Health" : "Manual")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(entry.source == .healthkit ? .nutriRed : .nutriBlue)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    (entry.source == .healthkit ? Color.nutriRed : Color.nutriBlue).opacity(0.1),
-                                    in: Capsule()
-                                )
                         }
                     }
                 }

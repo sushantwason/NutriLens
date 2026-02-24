@@ -5,7 +5,6 @@ struct MealAnalysisResultView: View {
     @Bindable var viewModel: MealAnalysisViewModel
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(HealthKitManager.self) private var healthKitManager
     var body: some View {
         NavigationStack {
             Group {
@@ -31,7 +30,7 @@ struct MealAnalysisResultView: View {
                 if viewModel.analysisState == .success && !viewModel.showFeedbackBanner {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            viewModel.saveMeal(context: modelContext, healthKitManager: healthKitManager)
+                            viewModel.saveMeal(context: modelContext)
                         }
                         .bold()
                     }
