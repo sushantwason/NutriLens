@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 @MainActor @Observable
 final class RecipeAnalysisViewModel {
@@ -104,6 +105,8 @@ final class RecipeAnalysisViewModel {
 
         // Release full-resolution image after storage compression
         capturedImage = nil
+        HapticService.mealSaved()
+        WidgetCenter.shared.reloadAllTimelines()
 
         if let hk = healthKitManager {
             Task { await hk.syncMeal(meal) }

@@ -54,6 +54,42 @@ final class ClaudeVisionService {
 
     // MARK: - Private
 
+    private static let maxRetries = 2
+
+    /// Retries a request on transient failures (network errors, 429, 5xx).
+    private func withRetry<T>(_ work: @Sendable () async throws -> T) async throws -> T {
+        var lastError: Error?
+        for attempt in 0...Self.maxRetries {
+            do {
+                return try await work()
+            } catch let error as NutriLensError {
+                lastError = error
+                switch error {
+                case .networkError, .apiError(statusCode: 429, _), .apiError(statusCode: 504, _):
+                    // Transient — wait and retry
+                    if attempt < Self.maxRetries {
+                        try await Task.sleep(for: .seconds(Double(attempt + 1) * 1.5))
+                        continue
+                    }
+                case .apiError(statusCode: let code, _) where code >= 500:
+                    if attempt < Self.maxRetries {
+                        try await Task.sleep(for: .seconds(Double(attempt + 1) * 1.5))
+                        continue
+                    }
+                default:
+                    throw error // Non-transient errors fail immediately
+                }
+            } catch {
+                lastError = error
+                if attempt < Self.maxRetries {
+                    try await Task.sleep(for: .seconds(Double(attempt + 1) * 1.5))
+                    continue
+                }
+            }
+        }
+        throw lastError ?? NutriLensError.unexpectedResponse
+    }
+
     private func sendAnalysisRequest(image: UIImage, type: String) async throws -> String {
         // Process image on a background thread to avoid blocking main
         let prepared: (base64: String, mediaType: String) = try await Task.detached {
@@ -63,44 +99,46 @@ final class ClaudeVisionService {
             return result
         }.value
 
-        var request = URLRequest(url: analyzeURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
-        request.timeoutInterval = 60
+        return try await withRetry { [analyzeURL] in
+            var request = URLRequest(url: analyzeURL)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
+            request.timeoutInterval = 60
 
-        // Build JSON body by writing directly to Data to minimize copies of the base64 string
-        var bodyData = Data()
-        bodyData.append(Data("{\"type\":\"\(type)\",\"mediaType\":\"\(prepared.mediaType)\",\"image\":\"".utf8))
-        bodyData.append(Data(prepared.base64.utf8))
-        bodyData.append(Data("\"}".utf8))
-        request.httpBody = bodyData
+            // Build JSON body by writing directly to Data to minimize copies of the base64 string
+            var bodyData = Data()
+            bodyData.append(Data("{\"type\":\"\(type)\",\"mediaType\":\"\(prepared.mediaType)\",\"image\":\"".utf8))
+            bodyData.append(Data(prepared.base64.utf8))
+            bodyData.append(Data("\"}".utf8))
+            request.httpBody = bodyData
 
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw NutriLensError.networkError(error)
+            let (data, response): (Data, URLResponse)
+            do {
+                (data, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                throw NutriLensError.networkError(error)
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NutriLensError.unexpectedResponse
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
+            }
+
+            // The Worker returns the Anthropic response as-is, so parse the same way
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let content = json["content"] as? [[String: Any]],
+                  let firstBlock = content.first,
+                  let text = firstBlock["text"] as? String else {
+                throw NutriLensError.unexpectedResponse
+            }
+
+            return text
         }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NutriLensError.unexpectedResponse
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
-        }
-
-        // The Worker returns the Anthropic response as-is, so parse the same way
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = json["content"] as? [[String: Any]],
-              let firstBlock = content.first,
-              let text = firstBlock["text"] as? String else {
-            throw NutriLensError.unexpectedResponse
-        }
-
-        return text
     }
 
     private func sendMultiImageAnalysisRequest(images: [UIImage], type: String) async throws -> String {
@@ -116,50 +154,52 @@ final class ClaudeVisionService {
             return results
         }.value
 
-        var request = URLRequest(url: analyzeURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
-        request.timeoutInterval = 90 // longer timeout for multiple images
+        return try await withRetry { [analyzeURL] in
+            var request = URLRequest(url: analyzeURL)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(AppConstants.appToken, forHTTPHeaderField: "X-App-Token")
+            request.timeoutInterval = 90 // longer timeout for multiple images
 
-        // Build JSON body by writing directly to Data to minimize copies of base64 strings
-        var bodyData = Data()
-        bodyData.append(Data("{\"type\":\"\(type)\",\"images\":[".utf8))
-        for (index, prepared) in preparedImages.enumerated() {
-            if index > 0 { bodyData.append(Data(",".utf8)) }
-            bodyData.append(Data("{\"image\":\"".utf8))
-            bodyData.append(Data(prepared.base64.utf8))
-            bodyData.append(Data("\",\"mediaType\":\"".utf8))
-            bodyData.append(Data(prepared.mediaType.utf8))
-            bodyData.append(Data("\"}".utf8))
+            // Build JSON body by writing directly to Data to minimize copies of base64 strings
+            var bodyData = Data()
+            bodyData.append(Data("{\"type\":\"\(type)\",\"images\":[".utf8))
+            for (index, prepared) in preparedImages.enumerated() {
+                if index > 0 { bodyData.append(Data(",".utf8)) }
+                bodyData.append(Data("{\"image\":\"".utf8))
+                bodyData.append(Data(prepared.base64.utf8))
+                bodyData.append(Data("\",\"mediaType\":\"".utf8))
+                bodyData.append(Data(prepared.mediaType.utf8))
+                bodyData.append(Data("\"}".utf8))
+            }
+            bodyData.append(Data("]}".utf8))
+            request.httpBody = bodyData
+
+            let (data, response): (Data, URLResponse)
+            do {
+                (data, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                throw NutriLensError.networkError(error)
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NutriLensError.unexpectedResponse
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+                throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
+            }
+
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let content = json["content"] as? [[String: Any]],
+                  let firstBlock = content.first,
+                  let text = firstBlock["text"] as? String else {
+                throw NutriLensError.unexpectedResponse
+            }
+
+            return text
         }
-        bodyData.append(Data("]}".utf8))
-        request.httpBody = bodyData
-
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            throw NutriLensError.networkError(error)
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NutriLensError.unexpectedResponse
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
-        }
-
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = json["content"] as? [[String: Any]],
-              let firstBlock = content.first,
-              let text = firstBlock["text"] as? String else {
-            throw NutriLensError.unexpectedResponse
-        }
-
-        return text
     }
 
     private func parseJSON<T: Decodable>(_ text: String) throws -> T {

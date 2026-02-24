@@ -55,10 +55,26 @@ final class HealthKitManager {
         guard isAuthorized, let store = healthStore else { return }
         let date = meal.timestamp
 
-        await writeSample(.dietaryEnergyConsumed, value: meal.totalCalories, unit: .kilocalorie(), date: date, store: store)
-        await writeSample(.dietaryProtein, value: meal.totalProteinGrams, unit: .gram(), date: date, store: store)
-        await writeSample(.dietaryCarbohydrates, value: meal.totalCarbsGrams, unit: .gram(), date: date, store: store)
-        await writeSample(.dietaryFatTotal, value: meal.totalFatGrams, unit: .gram(), date: date, store: store)
+        // Batch all dietary samples into a single HealthKit save call
+        var samples: [HKSample] = []
+        let entries: [(HKQuantityTypeIdentifier, Double, HKUnit)] = [
+            (.dietaryEnergyConsumed, meal.totalCalories, .kilocalorie()),
+            (.dietaryProtein, meal.totalProteinGrams, .gram()),
+            (.dietaryCarbohydrates, meal.totalCarbsGrams, .gram()),
+            (.dietaryFatTotal, meal.totalFatGrams, .gram())
+        ]
+        for (identifier, value, unit) in entries {
+            guard value > 0, let type = HKQuantityType.quantityType(forIdentifier: identifier) else { continue }
+            let quantity = HKQuantity(unit: unit, doubleValue: value)
+            samples.append(HKQuantitySample(type: type, quantity: quantity, start: date, end: date))
+        }
+
+        guard !samples.isEmpty else { return }
+        do {
+            try await store.save(samples)
+        } catch {
+            print("HealthKit batch write failed: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Write: Water

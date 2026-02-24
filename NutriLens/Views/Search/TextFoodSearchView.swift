@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 struct TextFoodSearchView: View {
     @Environment(\.modelContext) private var modelContext
@@ -224,6 +225,7 @@ struct TextFoodSearchView: View {
         modelContext.insert(meal)
 
         HapticService.mealSaved()
+        WidgetCenter.shared.reloadAllTimelines()
 
         showConfirmation = true
         // Use Task.sleep instead of DispatchQueue to avoid retain issues if view is dismissed early

@@ -66,26 +66,29 @@ struct NutriLensTimelineProvider: TimelineProvider {
         let start = Date().startOfDay
         let end = Date().endOfDay
 
-        // Fetch today's meals
-        let mealDescriptor = FetchDescriptor<Meal>(
+        // Fetch today's meals (capped to prevent OOM in widget extension)
+        var mealDescriptor = FetchDescriptor<Meal>(
             predicate: #Predicate<Meal> {
                 $0.isConfirmedByUser == true && $0.timestamp >= start && $0.timestamp < end
             }
         )
+        mealDescriptor.fetchLimit = 50
         let meals = (try? context.fetch(mealDescriptor)) ?? []
 
         // Fetch active goal
-        let goalDescriptor = FetchDescriptor<DailyGoal>(
+        var goalDescriptor = FetchDescriptor<DailyGoal>(
             predicate: #Predicate<DailyGoal> { $0.isActive == true }
         )
+        goalDescriptor.fetchLimit = 1
         let goal = (try? context.fetch(goalDescriptor))?.first
 
         // Fetch today's water
-        let waterDescriptor = FetchDescriptor<WaterEntry>(
+        var waterDescriptor = FetchDescriptor<WaterEntry>(
             predicate: #Predicate<WaterEntry> {
                 $0.timestamp >= start && $0.timestamp < end
             }
         )
+        waterDescriptor.fetchLimit = 100
         let waterEntries = (try? context.fetch(waterDescriptor)) ?? []
         let waterML = waterEntries.reduce(0) { $0 + $1.milliliters }
 

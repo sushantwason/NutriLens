@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import WidgetKit
 
 enum BarcodeState: Equatable {
     case scanning
@@ -69,6 +70,8 @@ final class BarcodeViewModel {
             state = .error("Failed to save meal: \(error.localizedDescription)")
             return
         }
+
+        WidgetCenter.shared.reloadAllTimelines()
 
         if let hk = healthKitManager {
             Task { await hk.syncMeal(meal) }

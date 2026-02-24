@@ -94,6 +94,23 @@ final class Meal {
         totalSugarGrams = totals.sugarGrams
     }
 
+    /// Strip photo data from meals older than the given number of days to reclaim storage.
+    /// Nutritional data is preserved — only the photo blob is removed.
+    static func pruneOldPhotos(context: ModelContext, olderThanDays: Int = 90) {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -olderThanDays, to: Date()) ?? Date()
+        var descriptor = FetchDescriptor<Meal>(
+            predicate: #Predicate<Meal> {
+                $0.photoData != nil && $0.timestamp < cutoff
+            }
+        )
+        descriptor.fetchLimit = 200 // batch to avoid memory spike
+        guard let meals = try? context.fetch(descriptor), !meals.isEmpty else { return }
+        for meal in meals {
+            meal.photoData = nil
+        }
+        try? context.save()
+    }
+
     /// Creates a new Meal with the same food items but current timestamp for quick re-logging
     func relogCopy() -> Meal {
         let copy = Meal(

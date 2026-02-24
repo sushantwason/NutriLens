@@ -1,8 +1,17 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
-const MODEL_SONNET = "claude-sonnet-4-20250514";
-const MODEL_HAIKU = "claude-haiku-4-5-20251001";
+const DEFAULT_MODEL_SONNET = "claude-sonnet-4-20250514";
+const DEFAULT_MODEL_HAIKU = "claude-haiku-4-5-20251001";
 const DAILY_SONNET_LIMIT = 15;
+const MAX_IMAGES_PER_REQUEST = 5;
+const MAX_BASE64_SIZE = 2_000_000; // ~2MB per image
+const MAX_REQUESTS_PER_IP_PER_MINUTE = 10;
+const ANTHROPIC_TIMEOUT_MS = 45_000;
+
+function getModel(env, key) {
+  if (key === "sonnet") return env.MODEL_SONNET || DEFAULT_MODEL_SONNET;
+  return env.MODEL_HAIKU || DEFAULT_MODEL_HAIKU;
+}
 
 const PROMPTS = {
   meal: {
@@ -153,10 +162,32 @@ function corsHeaders() {
   };
 }
 
+function getClientIP(request) {
+  return request.headers.get("CF-Connecting-IP") || "unknown";
+}
+
 function getSonnetKey(request) {
-  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const date = new Date().toISOString().slice(0, 10);
-  return `sonnet:${ip}:${date}`;
+  return `sonnet:${getClientIP(request)}:${date}`;
+}
+
+function getRateLimitKey(request) {
+  const minute = new Date().toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
+  return `rpm:${getClientIP(request)}:${minute}`;
+}
+
+async function checkGlobalRateLimit(request, env) {
+  try {
+    const key = getRateLimitKey(request);
+    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    if (count >= MAX_REQUESTS_PER_IP_PER_MINUTE) {
+      return false;
+    }
+    await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 120 });
+    return true;
+  } catch {
+    return true; // fail-open
+  }
 }
 
 async function canUseSonnet(request, env) {
@@ -185,6 +216,12 @@ async function handleAnalyze(request, body, env) {
   // Support both single image (image/mediaType) and multi-image (images array)
   let imageEntries = [];
   if (images && Array.isArray(images) && images.length > 0) {
+    if (images.length > MAX_IMAGES_PER_REQUEST) {
+      return Response.json(
+        { error: `Too many images. Maximum ${MAX_IMAGES_PER_REQUEST} per request.` },
+        { status: 400, headers: corsHeaders() }
+      );
+    }
     for (const img of images) {
       if (!img.image || !img.mediaType) {
         return Response.json(
@@ -192,9 +229,21 @@ async function handleAnalyze(request, body, env) {
           { status: 400, headers: corsHeaders() }
         );
       }
+      if (img.image.length > MAX_BASE64_SIZE) {
+        return Response.json(
+          { error: "Image too large. Maximum 2MB per image." },
+          { status: 400, headers: corsHeaders() }
+        );
+      }
       imageEntries.push({ image: img.image, mediaType: img.mediaType });
     }
   } else if (image && mediaType) {
+    if (image.length > MAX_BASE64_SIZE) {
+      return Response.json(
+        { error: "Image too large. Maximum 2MB per image." },
+        { status: 400, headers: corsHeaders() }
+      );
+    }
     imageEntries.push({ image, mediaType });
   } else {
     return Response.json(
@@ -212,10 +261,14 @@ async function handleAnalyze(request, body, env) {
   }
 
   // Select model: Sonnet for meal/recipe (visual), Haiku for label (text OCR)
-  let model = MODEL_HAIKU;
+  let model = getModel(env, "haiku");
   if (type === "meal" || type === "recipe") {
     const useSonnet = await canUseSonnet(request, env);
-    model = useSonnet ? MODEL_SONNET : MODEL_HAIKU;
+    if (useSonnet) {
+      model = getModel(env, "sonnet");
+      // Increment BEFORE API call to prevent race condition overshoot
+      await incrementSonnetUsage(request, env);
+    }
   }
 
   // Build content blocks: one image block per photo, then the text prompt
@@ -245,6 +298,9 @@ async function handleAnalyze(request, body, env) {
   };
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+
     const anthropicResponse = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -253,25 +309,51 @@ async function handleAnalyze(request, body, env) {
         "anthropic-version": ANTHROPIC_VERSION,
       },
       body: JSON.stringify(anthropicBody),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const responseData = await anthropicResponse.json();
 
-    // Track Sonnet usage after successful response
-    if (model === MODEL_SONNET) {
-      await incrementSonnetUsage(request, env);
-    }
-
     const headers = corsHeaders();
     headers["X-Model-Used"] = model;
+
+    // Differentiate Anthropic error responses
+    if (!anthropicResponse.ok) {
+      const status = anthropicResponse.status;
+      if (status === 429) {
+        headers["Retry-After"] = "30";
+        return Response.json(
+          { error: "Rate limited by AI provider. Please try again shortly." },
+          { status: 429, headers }
+        );
+      }
+      if (status === 401 || status === 403) {
+        return Response.json(
+          { error: "AI service configuration error." },
+          { status: 502, headers }
+        );
+      }
+      // 400 (bad request / invalid model) or 5xx
+      return Response.json(
+        { error: "AI analysis failed.", detail: responseData?.error?.message || "Unknown error" },
+        { status: status >= 500 ? 502 : status, headers }
+      );
+    }
 
     return Response.json(responseData, {
       status: anthropicResponse.status,
       headers,
     });
   } catch (err) {
+    if (err.name === "AbortError") {
+      return Response.json(
+        { error: "Analysis timed out. Please try again with a clearer photo." },
+        { status: 504, headers: corsHeaders() }
+      );
+    }
     return Response.json(
-      { error: "Failed to reach Anthropic API", detail: err.message },
+      { error: "Failed to reach AI service.", detail: err.message },
       { status: 502, headers: corsHeaders() }
     );
   }
@@ -301,8 +383,9 @@ async function handleCoach(body, env) {
     restrictions: restrictions || "",
   });
 
+  const haikuModel = getModel(env, "haiku");
   const anthropicBody = {
-    model: MODEL_HAIKU,
+    model: haikuModel,
     max_tokens: 256,
     system: COACH_PROMPT.system,
     messages: [
@@ -314,6 +397,9 @@ async function handleCoach(body, env) {
   };
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+
     const anthropicResponse = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -322,20 +408,43 @@ async function handleCoach(body, env) {
         "anthropic-version": ANTHROPIC_VERSION,
       },
       body: JSON.stringify(anthropicBody),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const responseData = await anthropicResponse.json();
 
     const headers = corsHeaders();
-    headers["X-Model-Used"] = MODEL_HAIKU;
+    headers["X-Model-Used"] = haikuModel;
+
+    if (!anthropicResponse.ok) {
+      const status = anthropicResponse.status;
+      if (status === 429) {
+        headers["Retry-After"] = "30";
+        return Response.json(
+          { error: "Rate limited by AI provider. Please try again shortly." },
+          { status: 429, headers }
+        );
+      }
+      return Response.json(
+        { error: "Coach unavailable.", detail: responseData?.error?.message || "Unknown error" },
+        { status: status >= 500 ? 502 : status, headers }
+      );
+    }
 
     return Response.json(responseData, {
       status: anthropicResponse.status,
       headers,
     });
   } catch (err) {
+    if (err.name === "AbortError") {
+      return Response.json(
+        { error: "Coach request timed out." },
+        { status: 504, headers: corsHeaders() }
+      );
+    }
     return Response.json(
-      { error: "Failed to reach Anthropic API", detail: err.message },
+      { error: "Failed to reach AI service.", detail: err.message },
       { status: 502, headers: corsHeaders() }
     );
   }
@@ -637,6 +746,19 @@ export default {
         { error: "Invalid JSON body" },
         { status: 400, headers: corsHeaders() }
       );
+    }
+
+    // Global per-IP rate limiting for AI endpoints
+    if (url.pathname === "/api/analyze" || url.pathname === "/api/coach") {
+      const allowed = await checkGlobalRateLimit(request, env);
+      if (!allowed) {
+        const headers = corsHeaders();
+        headers["Retry-After"] = "60";
+        return Response.json(
+          { error: "Too many requests. Please slow down." },
+          { status: 429, headers }
+        );
+      }
     }
 
     // Route to handler

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import WidgetKit
 
 @MainActor @Observable
 final class LabelScanViewModel {
@@ -78,6 +79,7 @@ final class LabelScanViewModel {
 
         // Release full-resolution image
         capturedImage = nil
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func reset() {

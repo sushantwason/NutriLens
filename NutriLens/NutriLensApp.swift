@@ -33,6 +33,11 @@ struct NutriLensApp: App {
                         WidgetCenter.shared.reloadAllTimelines()
                     }
                 }
+                .task {
+                    // Prune photo blobs from meals older than 90 days to limit storage growth
+                    let context = ModelContext(modelContainer)
+                    Meal.pruneOldPhotos(context: context)
+                }
         }
         .modelContainer(modelContainer)
     }

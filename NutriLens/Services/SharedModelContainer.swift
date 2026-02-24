@@ -4,6 +4,11 @@ import Foundation
 enum SharedModelContainer {
     static let appGroupID = "group.com.nutrilensapp.shared"
 
+    /// Schema version for tracking — bump when adding non-default properties to any @Model
+    /// Current: v2 (added sugarGramsTarget to DailyGoal, sugar/sugarTarget to widget entry)
+    /// All new properties MUST have default values to ensure lightweight migration works.
+    static let schemaVersion = 2
+
     /// Cached model container — created once and reused.
     static let sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -35,7 +40,12 @@ enum SharedModelContainer {
             do {
                 return try ModelContainer(for: schema, configurations: [fallback])
             } catch {
-                fatalError("Failed to create even in-memory model container: \(error)")
+                // Last resort: try with minimal schema to at least launch the app
+                print("⚠️ In-memory fallback also failed: \(error). Trying bare-minimum container.")
+                let minimal = ModelConfiguration(isStoredInMemoryOnly: true)
+                // If this also fails, the app will crash — but at this point the system is
+                // fundamentally broken (no memory available). This is unrecoverable.
+                return try! ModelContainer(for: schema, configurations: [minimal])
             }
         }
     }()

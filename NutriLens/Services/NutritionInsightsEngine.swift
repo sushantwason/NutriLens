@@ -52,11 +52,29 @@ enum NutritionInsightsEngine {
         let totalSaturatedFat: Double
     }
 
+    // MARK: - Cache
+
+    private static var cachedInsights: [InsightCard]?
+    private static var cacheKey: (mealCount: Int, date: Date)?
+
+    /// Invalidate the cache (call when meals are added/deleted)
+    static func invalidateCache() {
+        cachedInsights = nil
+        cacheKey = nil
+    }
+
     // MARK: - Main Analysis
 
     @MainActor
     static func generateInsights(context: ModelContext, goal: DailyGoal?) async -> [InsightCard] {
         let meals = fetchConfirmedMeals(context: context)
+
+        // Return cached results if meal count hasn't changed and still same day
+        let today = Calendar.current.startOfDay(for: Date())
+        if let cached = cachedInsights, let key = cacheKey,
+           key.mealCount == meals.count, Calendar.current.isDate(key.date, inSameDayAs: today) {
+            return cached
+        }
 
         guard !meals.isEmpty else {
             return [InsightCard(
@@ -82,6 +100,10 @@ enum NutritionInsightsEngine {
 
         // Sort by severity descending: alert first, then warning, then info
         insights.sort { $0.severity > $1.severity }
+
+        // Cache the results
+        cachedInsights = insights
+        cacheKey = (mealCount: meals.count, date: today)
 
         return insights
     }

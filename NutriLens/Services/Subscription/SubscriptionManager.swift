@@ -126,27 +126,37 @@ final class SubscriptionManager {
             return
         }
 
-        var detectedTier: SubscriptionTier = .none
-        var latestExpiration: Date?
+        // Wrap entitlement check in a timeout to avoid infinite hang if StoreKit is unresponsive
+        let statusTask = Task {
+            var detectedTier: SubscriptionTier = .none
+            var latestExpiration: Date?
 
-        for await result in Transaction.currentEntitlements {
-            if let transaction = try? checkVerified(result) {
-                switch transaction.productID {
-                case Self.proMonthlyProductID, Self.proAnnualProductID,
-                     Self.legacyProMonthlyProductID,
-                     Self.legacyStandardMonthlyProductID, Self.legacyUnlimitedMonthlyProductID,
-                     Self.legacyStandardAnnualProductID, Self.legacyUnlimitedAnnualProductID:
-                    // All legacy tiers migrate to pro
-                    detectedTier = .pro
-                    latestExpiration = transaction.expirationDate
-                default:
-                    break
+            for await result in Transaction.currentEntitlements {
+                if let transaction = try? checkVerified(result) {
+                    switch transaction.productID {
+                    case Self.proMonthlyProductID, Self.proAnnualProductID,
+                         Self.legacyProMonthlyProductID,
+                         Self.legacyStandardMonthlyProductID, Self.legacyUnlimitedMonthlyProductID,
+                         Self.legacyStandardAnnualProductID, Self.legacyUnlimitedAnnualProductID:
+                        detectedTier = .pro
+                        latestExpiration = transaction.expirationDate
+                    default:
+                        break
+                    }
                 }
             }
+            return (detectedTier, latestExpiration)
         }
 
-        currentTier = detectedTier
-        subscriptionExpirationDate = latestExpiration
+        let timeoutTask = Task {
+            try await Task.sleep(for: .seconds(10))
+            statusTask.cancel()
+        }
+
+        let result = await statusTask.value
+        timeoutTask.cancel()
+        currentTier = result.0
+        subscriptionExpirationDate = result.1
     }
 
     // MARK: - Helpers
