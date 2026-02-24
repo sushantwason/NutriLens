@@ -1,18 +1,18 @@
 {
-  "identifier" : "NutriLens Products",
+  "identifier" : "MealSight Products",
   "type" : "Configuration",
   "version" : 3,
   "subscriptionGroups" : [
     {
-      "id" : "nutrilens_pro",
+      "id" : "mealsight_pro",
       "localizations" : [
         {
-          "description" : "NutriLens Pro subscriptions",
-          "displayName" : "NutriLens Pro",
+          "description" : "MealSight Pro subscriptions",
+          "displayName" : "MealSight Pro",
           "locale" : "en_US"
         }
       ],
-      "name" : "NutriLens Pro",
+      "name" : "MealSight Pro",
       "subscriptions" : [
         {
           "adHocOffers" : [],
@@ -20,19 +20,40 @@
           "displayPrice" : "4.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "nutrilens_pro_monthly_001",
+          "internalID" : "mealsight_pro_monthly_001",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Unlimited daily meal and label scans",
-              "displayName" : "NutriLens Pro Monthly",
+              "description" : "Unlimited AI food scans and full access to MealSight Pro",
+              "displayName" : "MealSight Pro Monthly",
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.nutrilens.app.pro.monthly",
+          "productID" : "com.nutrilensapp.app.pro.monthly",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "Pro Monthly",
-          "subscriptionGroupID" : "nutrilens_pro",
+          "referenceName" : "MealSight Pro Monthly",
+          "subscriptionGroupID" : "mealsight_pro",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "mealsight_pro_annual_001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited AI food scans and full access — save 33%",
+              "displayName" : "MealSight Pro Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.nutrilensapp.app.pro.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "MealSight Pro Annual",
+          "subscriptionGroupID" : "mealsight_pro",
           "type" : "RecurringSubscription"
         }
       ]
