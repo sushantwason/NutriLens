@@ -78,6 +78,32 @@ struct BarcodeResultView: View {
 
     private var productView: some View {
         List {
+            if let urlString = viewModel.imageURL, let url = URL(string: urlString) {
+                Section {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxHeight: 180)
+                                .frame(maxWidth: .infinity)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        case .failure:
+                            EmptyView()
+                        default:
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 120)
+                        }
+                    }
+                }
+                .listRowBackground(Color.clear)
+                .onAppear {
+                    Task { await viewModel.downloadProductImage() }
+                }
+            }
+
             Section("Product Info") {
                 TextField("Product Name", text: $viewModel.productName)
 
