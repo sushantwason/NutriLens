@@ -208,7 +208,8 @@ struct MealHistoryRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            if let photoData = meal.photoData, let uiImage = UIImage(data: photoData) {
+            if let photoData = meal.photoData,
+               let uiImage = ThumbnailCache.shared.thumbnail(for: photoData, size: 100) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
@@ -264,7 +265,7 @@ struct FavoriteCardView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 if let photoData = meal.photoData,
-                   let uiImage = UIImage(data: photoData) {
+                   let uiImage = ThumbnailCache.shared.thumbnail(for: photoData, size: 72) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()

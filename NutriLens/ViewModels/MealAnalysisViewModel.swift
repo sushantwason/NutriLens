@@ -142,10 +142,17 @@ final class MealAnalysisViewModel {
         meal.isConfirmedByUser = true
         context.insert(meal)
 
-        try? context.save()
+        do {
+            try context.save()
+            savedMeal = meal
+            showFeedbackBanner = true
+        } catch {
+            analysisState = .error("Failed to save meal: \(error.localizedDescription)")
+            return
+        }
 
-        savedMeal = meal
-        showFeedbackBanner = true
+        // Release full-resolution image after storage compression
+        capturedImage = nil
         HapticService.mealSaved()
         WidgetCenter.shared.reloadAllTimelines()
 

@@ -43,7 +43,11 @@ final class LabelScanViewModel {
         )
 
         context.insert(label)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            analysisState = .error("Failed to save label: \(error.localizedDescription)")
+        }
     }
 
     func saveAsMeal(context: ModelContext, mealType: MealType) {
@@ -66,7 +70,14 @@ final class LabelScanViewModel {
         meal.isConfirmedByUser = true
 
         context.insert(meal)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            analysisState = .error("Failed to save meal: \(error.localizedDescription)")
+        }
+
+        // Release full-resolution image
+        capturedImage = nil
     }
 
     func reset() {

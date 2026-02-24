@@ -12,8 +12,9 @@ enum ImageProcessor {
         var quality: CGFloat = 0.6
         var data = resized.jpegData(compressionQuality: quality)
 
-        while let d = data, d.count > 1_500_000 && quality > 0.2 {
+        while let d = data, d.count > 1_500_000, quality > 0.2 {
             quality -= 0.1
+            data = nil  // Release previous buffer before allocating new one
             data = resized.jpegData(compressionQuality: quality)
         }
 

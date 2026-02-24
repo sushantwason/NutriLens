@@ -76,41 +76,31 @@ final class HealthKitManager {
 
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 
-        // Wrap HealthKit query with a timeout to prevent indefinite hangs
-        let weightTask = Task<Double?, Never> {
-            await withCheckedContinuation { continuation in
-                let query = HKSampleQuery(
-                    sampleType: type,
-                    predicate: nil,
-                    limit: 1,
-                    sortDescriptors: [sortDescriptor]
-                ) { _, samples, _ in
-                    let weight = (samples?.first as? HKQuantitySample)?
-                        .quantity.doubleValue(for: .gramUnit(with: .kilo))
-                    continuation.resume(returning: weight)
-                }
-                store.execute(query)
+        // Use a single continuation with a timeout via stopping the query
+        return await withCheckedContinuation { continuation in
+            var hasResumed = false
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: nil,
+                limit: 1,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, _ in
+                guard !hasResumed else { return }
+                hasResumed = true
+                let weight = (samples?.first as? HKQuantitySample)?
+                    .quantity.doubleValue(for: .gramUnit(with: .kilo))
+                continuation.resume(returning: weight)
+            }
+            store.execute(query)
+
+            // Timeout: stop the query after 10 seconds
+            DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+                guard !hasResumed else { return }
+                hasResumed = true
+                store.stop(query)
+                continuation.resume(returning: nil)
             }
         }
-
-        // Timeout after 10 seconds to prevent hanging
-        let timeoutTask = Task<Double?, Never> {
-            try? await Task.sleep(nanoseconds: 10_000_000_000)
-            return nil
-        }
-
-        // Race: whichever finishes first wins
-        let result = await withTaskGroup(of: Double?.self) { group in
-            group.addTask { await weightTask.value }
-            group.addTask { await timeoutTask.value }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
-        }
-
-        weightTask.cancel()
-        timeoutTask.cancel()
-        return result
     }
 
     // MARK: - Private

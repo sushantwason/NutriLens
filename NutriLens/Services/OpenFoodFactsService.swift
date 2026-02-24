@@ -39,8 +39,17 @@ enum OpenFoodFactsService {
 
         let data: Data
         do {
-            let (responseData, _) = try await URLSession.shared.data(for: request)
+            let (responseData, response) = try await URLSession.shared.data(for: request)
+            if let httpResponse = response as? HTTPURLResponse,
+               !(200...299).contains(httpResponse.statusCode) {
+                throw OpenFoodFactsError.networkError(
+                    NSError(domain: "OpenFoodFacts", code: httpResponse.statusCode,
+                            userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode)"])
+                )
+            }
             data = responseData
+        } catch let error as OpenFoodFactsError {
+            throw error
         } catch {
             throw OpenFoodFactsError.networkError(error)
         }

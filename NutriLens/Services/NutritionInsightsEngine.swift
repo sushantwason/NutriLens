@@ -54,6 +54,7 @@ enum NutritionInsightsEngine {
 
     // MARK: - Main Analysis
 
+    @MainActor
     static func generateInsights(context: ModelContext, goal: DailyGoal?) async -> [InsightCard] {
         let meals = fetchConfirmedMeals(context: context)
 

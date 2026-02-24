@@ -486,142 +486,153 @@ struct MealRowCard: View {
     var onDelete: (() -> Void)?
     var onDuplicate: (() -> Void)?
 
+    @Environment(\.modelContext) private var modelContext
     @State private var offset: CGFloat = 0
     @State private var startOffset: CGFloat = 0
     private let actionWidth: CGFloat = 70
 
     var body: some View {
         ZStack {
-            // Leading action: One More (revealed by swipe right)
-            HStack(spacing: 0) {
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0 }
-                    startOffset = 0
-                    onDuplicate?()
-                } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.body.weight(.semibold))
-                        Text("One More")
-                            .font(.system(size: 9, weight: .medium))
-                    }
+            leadingAction
+            trailingAction
+            mainRowContent
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    // MARK: - Sub-views (broken up for Swift compiler type-checking)
+
+    private var leadingAction: some View {
+        HStack(spacing: 0) {
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0 }
+                startOffset = 0
+                onDuplicate?()
+            } label: {
+                VStack(spacing: 2) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.body.weight(.semibold))
+                    Text("One More")
+                        .font(.system(size: 9, weight: .medium))
+                }
+                .foregroundStyle(.white)
+                .frame(width: actionWidth)
+                .frame(maxHeight: .infinity)
+            }
+            .background(.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel("Log \(meal.name) again")
+
+            Spacer()
+        }
+    }
+
+    private var trailingAction: some View {
+        HStack(spacing: 0) {
+            Spacer()
+
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Image(systemName: "trash.fill")
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(width: actionWidth)
                     .frame(maxHeight: .infinity)
+            }
+            .background(.red, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel("Delete \(meal.name)")
+        }
+    }
+
+    private var mainRowContent: some View {
+        NavigationLink(destination: MealDetailView(meal: meal)) {
+            HStack(spacing: 12) {
+                Image(systemName: meal.mealType.icon)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.nutriGreen)
+                    .frame(width: 40, height: 40)
+                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(meal.name)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(1)
+
+                    Text(meal.timestamp.shortTimeString)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .background(.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
-                .accessibilityLabel("Log \(meal.name) again")
 
                 Spacer()
-            }
 
-            // Trailing action: Delete (revealed by swipe left)
-            HStack(spacing: 0) {
-                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(meal.totalCalories.calorieString) kcal")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.calorieColor)
 
-                Button(role: .destructive) {
-                    onDelete?()
-                } label: {
-                    Image(systemName: "trash.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: actionWidth)
-                        .frame(maxHeight: .infinity)
-                }
-                .background(.red, in: RoundedRectangle(cornerRadius: 14))
-                .accessibilityLabel("Delete \(meal.name)")
-            }
-
-            // Main row content
-            NavigationLink(destination: MealDetailView(meal: meal)) {
-                HStack(spacing: 12) {
-                    Image(systemName: meal.mealType.icon)
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.nutriGreen)
-                        .frame(width: 40, height: 40)
-                        .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(meal.name)
-                            .font(.subheadline.weight(.medium))
-                            .lineLimit(1)
-
-                        Text(meal.timestamp.shortTimeString)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 6) {
+                        macroLabel("P", meal.totalProteinGrams, .proteinColor)
+                        macroLabel("C", meal.totalCarbsGrams, .carbsColor)
+                        macroLabel("F", meal.totalFatGrams, .fatColor)
                     }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(meal.totalCalories.calorieString) kcal")
-                            .font(.subheadline.weight(.bold))
-                            .foregroundStyle(.calorieColor)
-
-                        HStack(spacing: 6) {
-                            macroLabel("P", meal.totalProteinGrams, .proteinColor)
-                            macroLabel("C", meal.totalCarbsGrams, .carbsColor)
-                            macroLabel("F", meal.totalFatGrams, .fatColor)
+                }
+            }
+            .padding(12)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(meal.name), \(meal.timestamp.shortTimeString)")
+        .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams")
+        .accessibilityHint("Opens meal details")
+        .accessibilityAddTraits(.isButton)
+        .offset(x: offset)
+        .highPriorityGesture(
+            DragGesture(minimumDistance: 30, coordinateSpace: .local)
+                .onChanged { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    let proposed = startOffset + value.translation.width
+                    offset = min(max(proposed, -actionWidth), actionWidth)
+                }
+                .onEnded { value in
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        if offset < -actionWidth / 2 {
+                            offset = -actionWidth
+                        } else if offset > actionWidth / 2 {
+                            offset = actionWidth
+                        } else {
+                            offset = 0
                         }
                     }
+                    startOffset = offset
                 }
-                .padding(12)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        )
+        .contextMenu {
+            Button {
+                onDuplicate?()
+            } label: {
+                Label("One More", systemImage: "plus.circle")
             }
-            .buttonStyle(.plain)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(meal.name), \(meal.timestamp.shortTimeString)")
-            .accessibilityValue("\(meal.totalCalories.calorieString) kilocalories, protein \(meal.totalProteinGrams.oneDecimalString) grams, carbs \(meal.totalCarbsGrams.oneDecimalString) grams, fat \(meal.totalFatGrams.oneDecimalString) grams")
-            .accessibilityHint("Opens meal details")
-            .accessibilityAddTraits(.isButton)
-            .offset(x: offset)
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 30, coordinateSpace: .local)
-                    .onChanged { value in
-                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                        let proposed = startOffset + value.translation.width
-                        offset = min(max(proposed, -actionWidth), actionWidth)
-                    }
-                    .onEnded { value in
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            if offset < -actionWidth / 2 {
-                                offset = -actionWidth
-                            } else if offset > actionWidth / 2 {
-                                offset = actionWidth
-                            } else {
-                                offset = 0
-                            }
-                        }
-                        startOffset = offset
-                    }
-            )
-            .contextMenu {
-                Button {
-                    onDuplicate?()
-                } label: {
-                    Label("One More", systemImage: "plus.circle")
-                }
 
-                Button {
-                    HapticService.buttonTap()
-                    meal.isFavorite.toggle()
-                } label: {
-                    Label(
-                        meal.isFavorite ? "Unfavorite" : "Favorite",
-                        systemImage: meal.isFavorite ? "heart.slash" : "heart"
-                    )
-                }
+            Button {
+                HapticService.buttonTap()
+                meal.isFavorite.toggle()
+                try? modelContext.save()
+            } label: {
+                Label(
+                    meal.isFavorite ? "Unfavorite" : "Favorite",
+                    systemImage: meal.isFavorite ? "heart.slash" : "heart"
+                )
+            }
 
-                Divider()
+            Divider()
 
-                Button(role: .destructive) {
-                    onDelete?()
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                }
+            Button(role: .destructive) {
+                onDelete?()
+            } label: {
+                Label("Delete", systemImage: "trash")
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 
     private func macroLabel(_ letter: String, _ value: Double, _ color: Color) -> some View {

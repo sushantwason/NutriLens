@@ -60,10 +60,15 @@ final class BarcodeViewModel {
         meal.isConfirmedByUser = true
 
         context.insert(meal)
-        try? context.save()
 
-        savedMeal = meal
-        showFeedbackBanner = true
+        do {
+            try context.save()
+            savedMeal = meal
+            showFeedbackBanner = true
+        } catch {
+            state = .error("Failed to save meal: \(error.localizedDescription)")
+            return
+        }
 
         if let hk = healthKitManager {
             Task { await hk.syncMeal(meal) }

@@ -30,6 +30,7 @@ struct SettingsView: View {
             dailyGoalsSection
             profileSection
             dietaryRestrictionsSection
+            healthSection
             mealRemindersSection
             widgetsSection
             achievementsSection
@@ -256,6 +257,24 @@ struct SettingsView: View {
         return restrictions.isEmpty ? "None" : restrictions.map(\.displayName).joined(separator: ", ")
     }
 
+    // MARK: - Health
+
+    private var healthSection: some View {
+        Section("Health") {
+            NavigationLink {
+                HealthKitSettingsView()
+            } label: {
+                Label("Apple Health Sync", systemImage: "heart.fill")
+            }
+
+            NavigationLink {
+                WeightLogView()
+            } label: {
+                Label("Weight Log", systemImage: "scalemass.fill")
+            }
+        }
+    }
+
     // MARK: - Meal Reminders
 
     private var mealRemindersSection: some View {
@@ -394,7 +413,11 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         Section("About") {
-            LabeledContent("Version", value: "1.0 (6)")
+            LabeledContent("Version", value: {
+                let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+                return "\(version) (\(build))"
+            }())
             LabeledContent("AI Model", value: "Claude Haiku")
 
             NavigationLink {

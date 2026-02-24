@@ -26,24 +26,6 @@ struct MainTabView: View {
                 .tag(2)
         }
         .tint(.nutriGreen)
-        .gesture(
-            DragGesture(minimumDistance: 50, coordinateSpace: .global)
-                .onEnded { value in
-                    let horizontal = value.translation.width
-                    let vertical = value.translation.height
-                    // Only trigger for predominantly horizontal swipes
-                    guard abs(horizontal) > abs(vertical) else { return }
-                    withAnimation {
-                        if horizontal < 0 {
-                            // Swipe left → next tab
-                            selectedTab = min(selectedTab + 1, tabCount - 1)
-                        } else {
-                            // Swipe right → previous tab
-                            selectedTab = max(selectedTab - 1, 0)
-                        }
-                    }
-                }
-        )
         .onChange(of: selectedTab) { _, _ in
             HapticService.tabChanged()
         }

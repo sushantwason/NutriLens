@@ -9,38 +9,15 @@ struct NutriLensApp: App {
     @State private var healthKitManager = HealthKitManager()
     @State private var scanCounter = ScanCounter()
     @State private var mealReminderManager = MealReminderManager()
+    @Environment(\.scenePhase) private var scenePhase
 
     let modelContainer: ModelContainer
 
     init() {
         OwnerBypass.printDeviceUUID()
-
-        // Use shared App Group container so widgets can read the same data
-        let schema = Schema([
-            Meal.self,
-            FoodItem.self,
-            NutritionLabel.self,
-            DailyGoal.self,
-            UserProfile.self,
-            WaterEntry.self,
-            WeightEntry.self
-        ])
-
-        let config: ModelConfiguration
-        if let containerURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: SharedModelContainer.appGroupID
-        ) {
-            let storeURL = containerURL.appendingPathComponent("NutriLens.store")
-            config = ModelConfiguration("NutriLens", schema: schema, url: storeURL)
-        } else {
-            config = ModelConfiguration("NutriLens", schema: schema)
-        }
-
-        do {
-            modelContainer = try ModelContainer(for: schema, configurations: [config])
-        } catch {
-            fatalError("Failed to create model container: \(error)")
-        }
+        AppConstants.seedAppTokenIfNeeded()
+        // Reuse the shared container so the app and widget read/write the same store
+        modelContainer = SharedModelContainer.sharedModelContainer
     }
 
     var body: some Scene {
@@ -51,6 +28,11 @@ struct NutriLensApp: App {
                 .environment(healthKitManager)
                 .environment(scanCounter)
                 .environment(mealReminderManager)
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .background {
+                        WidgetCenter.shared.reloadAllTimelines()
+                    }
+                }
         }
         .modelContainer(modelContainer)
     }

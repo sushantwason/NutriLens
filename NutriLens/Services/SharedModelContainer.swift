@@ -29,7 +29,14 @@ enum SharedModelContainer {
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            fatalError("Failed to create shared model container: \(error)")
+            // Fallback to in-memory container so the app/widget doesn't crash
+            print("⚠️ Failed to create shared model container: \(error). Using in-memory fallback.")
+            let fallback = ModelConfiguration("NutriLensFallback", schema: schema, isStoredInMemoryOnly: true)
+            do {
+                return try ModelContainer(for: schema, configurations: [fallback])
+            } catch {
+                fatalError("Failed to create even in-memory model container: \(error)")
+            }
         }
     }()
 }

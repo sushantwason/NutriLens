@@ -1,6 +1,6 @@
 import Foundation
 
-@Observable
+@MainActor @Observable
 final class ScanCounter {
     // MARK: - State
 
@@ -41,10 +41,14 @@ final class ScanCounter {
 
     // MARK: - Private
 
+    private static let monthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM"
+        return f
+    }()
+
     private func loadCurrentMonth() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM"
-        let currentMonth = formatter.string(from: Date())
+        let currentMonth = Self.monthFormatter.string(from: Date())
 
         let persistedMonthKey = UserDefaults.standard.string(forKey: Self.monthKeyKey) ?? ""
 

@@ -11,8 +11,14 @@ enum OwnerBypass {
     /// This value persists across app updates but changes on reinstall.
     private static let ownerDeviceID = "B39B3D49-AEED-4ECE-863F-1664F7680799"
 
-    /// Set to false to disable bypass (e.g., for App Store review builds)
-    private static let bypassEnabled = true
+    /// Bypass is only active in DEBUG builds to prevent accidental production bypass
+    private static let bypassEnabled: Bool = {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }()
 
     static var isOwnerDevice: Bool {
         guard bypassEnabled else { return false }

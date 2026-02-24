@@ -67,6 +67,12 @@ final class CameraService: NSObject {
     }
 
     func stopSession() {
+        // Resume any pending continuations to prevent leaks
+        continuation?.resume(returning: nil)
+        continuation = nil
+        barcodeContinuation?.resume(returning: nil)
+        barcodeContinuation = nil
+
         guard session.isRunning else { return }
         Task.detached(priority: .userInitiated) { [session] in
             session.stopRunning()
