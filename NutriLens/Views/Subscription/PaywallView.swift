@@ -145,19 +145,26 @@ struct PaywallView: View {
                             .foregroundStyle(.nutriGreen)
                     }
                 }
+            } else if subscriptionManager.isLoading {
+                ProgressView()
+                    .controlSize(.regular)
+                    .padding(.vertical, 12)
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(isAnnual ? "$39.99" : "$4.99")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                    Text(isAnnual ? "/year" : "/month")
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+
+                    Text("Unable to load pricing")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                }
 
-                if isAnnual {
-                    Text("Just $3.33/month")
-                        .font(.subheadline)
-                        .foregroundStyle(.nutriGreen)
+                    Button {
+                        Task { await subscriptionManager.loadProducts() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .font(.subheadline.weight(.medium))
+                    }
                 }
             }
         }
@@ -175,7 +182,9 @@ struct PaywallView: View {
     // MARK: - Subscribe Button
 
     private var subscribeButton: some View {
-        Button {
+        let isDisabled = subscriptionManager.isLoading || selectedProduct == nil
+
+        return Button {
             Task {
                 if let product = selectedProduct {
                     await subscriptionManager.purchase(product: product)
@@ -194,9 +203,10 @@ struct PaywallView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
+            .background(isDisabled ? Color.gray : Color.nutriGreen, in: RoundedRectangle(cornerRadius: 14))
         }
-        .disabled(subscriptionManager.isLoading || selectedProduct == nil)
+        .disabled(isDisabled)
+        .opacity(isDisabled ? 0.6 : 1.0)
     }
 
     // MARK: - Restore & Error

@@ -66,12 +66,17 @@ final class SubscriptionManager {
 
     func loadProducts() async {
         isLoading = true
+        purchaseError = nil
         do {
             let storeProducts = try await Product.products(for: Self.allProductIDs)
             // Only show current products (not legacy), sorted by price
             products = storeProducts
                 .filter { $0.id == Self.proMonthlyProductID || $0.id == Self.proAnnualProductID }
                 .sorted { $0.price < $1.price }
+
+            if products.isEmpty {
+                purchaseError = "Subscriptions are temporarily unavailable. Please try again later."
+            }
         } catch {
             purchaseError = "Failed to load products: \(error.localizedDescription)"
         }
