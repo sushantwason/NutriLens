@@ -474,7 +474,11 @@ struct DashboardView: View {
         withAnimation {
             HapticService.mealDeleted()
             modelContext.delete(meal)
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to delete meal: \(error.localizedDescription)")
+            }
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
@@ -483,7 +487,11 @@ struct DashboardView: View {
         withAnimation {
             let copy = meal.relogCopy()
             modelContext.insert(copy)
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to duplicate meal: \(error.localizedDescription)")
+            }
             HapticService.mealSaved()
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -627,7 +635,11 @@ struct MealRowCard: View {
             Button {
                 HapticService.buttonTap()
                 meal.isFavorite.toggle()
-                try? modelContext.save()
+                do {
+                    try modelContext.save()
+                } catch {
+                    print("Failed to save favorite: \(error.localizedDescription)")
+                }
             } label: {
                 Label(
                     meal.isFavorite ? "Unfavorite" : "Favorite",

@@ -97,7 +97,11 @@ final class BarcodeViewModel {
 
     func rateAccuracy(_ rating: Int, context: ModelContext) {
         savedMeal?.userAccuracyRating = rating
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            print("Failed to save accuracy rating: \(error.localizedDescription)")
+        }
         showFeedbackBanner = false
     }
 

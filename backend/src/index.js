@@ -7,6 +7,8 @@ const MAX_IMAGES_PER_REQUEST = 5;
 const MAX_BASE64_SIZE = 2_000_000; // ~2MB per image
 const MAX_REQUESTS_PER_IP_PER_MINUTE = 10;
 const ANTHROPIC_TIMEOUT_MS = 45_000;
+const MAX_FEEDBACK_MESSAGE_LENGTH = 5000;
+const VALID_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
 function getModel(env, key) {
   if (key === "sonnet") return env.MODEL_SONNET || DEFAULT_MODEL_SONNET;
@@ -179,7 +181,7 @@ function getRateLimitKey(request) {
 async function checkGlobalRateLimit(request, env) {
   try {
     const key = getRateLimitKey(request);
-    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    const count = parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     if (count >= MAX_REQUESTS_PER_IP_PER_MINUTE) {
       return false;
     }
@@ -193,7 +195,7 @@ async function checkGlobalRateLimit(request, env) {
 async function canUseSonnet(request, env) {
   try {
     const key = getSonnetKey(request);
-    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    const count = parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     return count < DAILY_SONNET_LIMIT;
   } catch {
     return true; // fail-open: allow Sonnet if KV is unavailable
@@ -203,7 +205,7 @@ async function canUseSonnet(request, env) {
 async function incrementSonnetUsage(request, env) {
   try {
     const key = getSonnetKey(request);
-    const count = parseInt(await env.RATE_LIMIT.get(key)) || 0;
+    const count = parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 86400 });
   } catch {
     // best-effort; don't block the request if KV write fails
@@ -223,9 +225,15 @@ async function handleAnalyze(request, body, env) {
       );
     }
     for (const img of images) {
-      if (!img.image || !img.mediaType) {
+      if (!img.image || !img.mediaType || typeof img.image !== "string" || typeof img.mediaType !== "string") {
         return Response.json(
-          { error: "Each entry in images must have image and mediaType" },
+          { error: "Each entry in images must have image and mediaType as strings" },
+          { status: 400, headers: corsHeaders() }
+        );
+      }
+      if (!VALID_MEDIA_TYPES.has(img.mediaType)) {
+        return Response.json(
+          { error: "Invalid media type. Supported: image/jpeg, image/png, image/gif, image/webp" },
           { status: 400, headers: corsHeaders() }
         );
       }
@@ -238,6 +246,18 @@ async function handleAnalyze(request, body, env) {
       imageEntries.push({ image: img.image, mediaType: img.mediaType });
     }
   } else if (image && mediaType) {
+    if (typeof image !== "string" || typeof mediaType !== "string") {
+      return Response.json(
+        { error: "image and mediaType must be strings" },
+        { status: 400, headers: corsHeaders() }
+      );
+    }
+    if (!VALID_MEDIA_TYPES.has(mediaType)) {
+      return Response.json(
+        { error: "Invalid media type. Supported: image/jpeg, image/png, image/gif, image/webp" },
+        { status: 400, headers: corsHeaders() }
+      );
+    }
     if (image.length > MAX_BASE64_SIZE) {
       return Response.json(
         { error: "Image too large. Maximum 2MB per image." },
@@ -297,10 +317,10 @@ async function handleAnalyze(request, body, env) {
     ],
   };
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
 
+  try {
     const anthropicResponse = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -311,7 +331,6 @@ async function handleAnalyze(request, body, env) {
       body: JSON.stringify(anthropicBody),
       signal: controller.signal,
     });
-    clearTimeout(timeout);
 
     const responseData = await anthropicResponse.json();
 
@@ -356,6 +375,8 @@ async function handleAnalyze(request, body, env) {
       { error: "Failed to reach AI service.", detail: err.message },
       { status: 502, headers: corsHeaders() }
     );
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -396,10 +417,10 @@ async function handleCoach(body, env) {
     ],
   };
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
 
+  try {
     const anthropicResponse = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -410,7 +431,6 @@ async function handleCoach(body, env) {
       body: JSON.stringify(anthropicBody),
       signal: controller.signal,
     });
-    clearTimeout(timeout);
 
     const responseData = await anthropicResponse.json();
 
@@ -424,6 +444,12 @@ async function handleCoach(body, env) {
         return Response.json(
           { error: "Rate limited by AI provider. Please try again shortly." },
           { status: 429, headers }
+        );
+      }
+      if (status === 401 || status === 403) {
+        return Response.json(
+          { error: "AI service configuration error." },
+          { status: 502, headers }
         );
       }
       return Response.json(
@@ -447,20 +473,22 @@ async function handleCoach(body, env) {
       { error: "Failed to reach AI service.", detail: err.message },
       { status: 502, headers: corsHeaders() }
     );
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 async function handleFeedback(body, env) {
   const { category, message, appVersion } = body;
 
-  if (!category || !message) {
+  if (!category || !message || typeof category !== "string" || typeof message !== "string") {
     return Response.json(
-      { error: "Missing required fields: category, message" },
+      { error: "Missing required fields: category, message (must be strings)" },
       { status: 400, headers: corsHeaders() }
     );
   }
 
-  const trimmedMessage = message.trim();
+  const trimmedMessage = message.slice(0, MAX_FEEDBACK_MESSAGE_LENGTH).trim();
   if (trimmedMessage.length === 0) {
     return Response.json(
       { error: "Message cannot be empty" },

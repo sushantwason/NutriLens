@@ -70,13 +70,14 @@ enum StreakManager {
         let today = calendar.startOfDay(for: Date())
         let grouped = groupMealsByDay(meals)
         var streak = 0
-        var checkDate = calendar.date(byAdding: .day, value: -1, to: today)!
+        guard var checkDate = calendar.date(byAdding: .day, value: -1, to: today) else { return 0 }
 
         for _ in 0..<365 {
             let totals = grouped[checkDate] ?? (0, 0, 0, 0)
             guard goalsMetForDay(dayTotals: totals, goal: goal) else { break }
             streak += 1
-            checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate)!
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
+            checkDate = prev
         }
         return streak
     }
@@ -99,7 +100,8 @@ enum StreakManager {
             } else {
                 current = 0
             }
-            date = calendar.date(byAdding: .day, value: 1, to: date)!
+            guard let next = calendar.date(byAdding: .day, value: 1, to: date) else { break }
+            date = next
         }
         return longest
     }
