@@ -5,8 +5,6 @@ struct MealDetailView: View {
     let meal: Meal
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
-    @State private var showShareSheet = false
-    @State private var shareImage: UIImage?
     @State private var editedName = ""
 
     var body: some View {
@@ -62,8 +60,9 @@ struct MealDetailView: View {
                             mealTypeIcon: meal.mealType.icon,
                             mealPhoto: photo
                         )
-                        shareImage = card.renderImage()
-                        showShareSheet = shareImage != nil
+                        if let image = card.renderImage() {
+                            ShareSheet.present(items: [image])
+                        }
                     } label: {
                         Image(systemName: "square.and.arrow.up")
                             .foregroundStyle(.secondary)
@@ -113,11 +112,6 @@ struct MealDetailView: View {
                 }
             }
             .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showShareSheet) {
-            if let image = shareImage {
-                ShareSheetView(items: [image])
-            }
         }
     }
 

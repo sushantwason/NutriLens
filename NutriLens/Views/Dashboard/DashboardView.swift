@@ -378,6 +378,17 @@ struct DashboardView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(.quaternary, in: Capsule())
+
+                if !todaysMeals.isEmpty {
+                    Button {
+                        shareDaySummary()
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Share today's summary")
+                }
             }
 
             if todaysMeals.isEmpty {
@@ -458,6 +469,33 @@ struct DashboardView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityHint("View patterns, alerts and suggestions")
+    }
+
+    private func shareDaySummary() {
+        let summaries = todaysMeals.map { meal in
+            DailySummaryShareCardView.MealSummary(
+                id: meal.id,
+                name: meal.name,
+                mealTypeIcon: meal.mealType.icon,
+                calories: meal.totalCalories,
+                protein: meal.totalProteinGrams,
+                carbs: meal.totalCarbsGrams,
+                fat: meal.totalFatGrams
+            )
+        }
+        let card = DailySummaryShareCardView(
+            date: Date(),
+            meals: summaries,
+            totalCalories: todayTotals.calories,
+            totalProtein: todayTotals.proteinGrams,
+            totalCarbs: todayTotals.carbsGrams,
+            totalFat: todayTotals.fatGrams,
+            totalSugar: todayTotals.sugarGrams,
+            scanStreak: cachedScanStreak
+        )
+        if let image = card.renderImage() {
+            ShareSheet.present(items: [image])
+        }
     }
 
     private func requestScan() {
@@ -563,11 +601,20 @@ struct MealRowCard: View {
     private var mainRowContent: some View {
         NavigationLink(destination: MealDetailView(meal: meal)) {
             HStack(spacing: 12) {
-                Image(systemName: meal.mealType.icon)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.nutriGreen)
-                    .frame(width: 40, height: 40)
-                    .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                if let photoData = meal.photoData,
+                   let uiImage = ThumbnailCache.shared.thumbnail(for: photoData, size: 80) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 40, height: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    Image(systemName: meal.mealType.icon)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.nutriGreen)
+                        .frame(width: 40, height: 40)
+                        .background(.nutriGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                }
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(meal.name)
