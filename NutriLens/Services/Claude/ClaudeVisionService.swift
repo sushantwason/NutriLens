@@ -28,28 +28,34 @@ enum NutriLensError: LocalizedError {
 final class ClaudeVisionService {
     private let analyzeURL = URL(string: "\(AppConstants.apiBaseURL)/api/analyze")!
 
-    func analyzeMealPhoto(_ image: UIImage) async throws -> MealAnalysisResponse {
-        let responseText = try await sendAnalysisRequest(image: image, type: "meal")
-        return try parseJSON(responseText)
+    /// Result wrapper that includes the model used for analysis
+    struct AnalysisResult<T> {
+        let response: T
+        let modelUsed: String?
     }
 
-    func analyzeMealPhotos(_ images: [UIImage]) async throws -> MealAnalysisResponse {
+    func analyzeMealPhoto(_ image: UIImage) async throws -> AnalysisResult<MealAnalysisResponse> {
+        let (responseText, model) = try await sendAnalysisRequest(image: image, type: "meal")
+        return AnalysisResult(response: try parseJSON(responseText), modelUsed: model)
+    }
+
+    func analyzeMealPhotos(_ images: [UIImage]) async throws -> AnalysisResult<MealAnalysisResponse> {
         guard !images.isEmpty else { throw NutriLensError.imageProcessingFailed }
         if images.count == 1 {
             return try await analyzeMealPhoto(images[0])
         }
-        let responseText = try await sendMultiImageAnalysisRequest(images: images, type: "meal")
-        return try parseJSON(responseText)
+        let (responseText, model) = try await sendMultiImageAnalysisRequest(images: images, type: "meal")
+        return AnalysisResult(response: try parseJSON(responseText), modelUsed: model)
     }
 
     func analyzeNutritionLabel(_ image: UIImage) async throws -> LabelAnalysisResponse {
-        let responseText = try await sendAnalysisRequest(image: image, type: "label")
+        let (responseText, _) = try await sendAnalysisRequest(image: image, type: "label")
         return try parseJSON(responseText)
     }
 
-    func analyzeRecipe(_ image: UIImage) async throws -> RecipeAnalysisResponse {
-        let responseText = try await sendAnalysisRequest(image: image, type: "recipe")
-        return try parseJSON(responseText)
+    func analyzeRecipe(_ image: UIImage) async throws -> AnalysisResult<RecipeAnalysisResponse> {
+        let (responseText, model) = try await sendAnalysisRequest(image: image, type: "recipe")
+        return AnalysisResult(response: try parseJSON(responseText), modelUsed: model)
     }
 
     // MARK: - Private
@@ -90,7 +96,7 @@ final class ClaudeVisionService {
         throw lastError ?? NutriLensError.unexpectedResponse
     }
 
-    private func sendAnalysisRequest(image: UIImage, type: String) async throws -> String {
+    private func sendAnalysisRequest(image: UIImage, type: String) async throws -> (String, String?) {
         // Process image on a background thread to avoid blocking main
         let prepared: (base64: String, mediaType: String) = try await Task.detached {
             guard let result = ImageProcessor.prepareForAPI(image) else {
@@ -124,6 +130,8 @@ final class ClaudeVisionService {
                 throw NutriLensError.unexpectedResponse
             }
 
+            let modelUsed = httpResponse.value(forHTTPHeaderField: "X-Model-Used")
+
             guard httpResponse.statusCode == 200 else {
                 let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
@@ -137,11 +145,11 @@ final class ClaudeVisionService {
                 throw NutriLensError.unexpectedResponse
             }
 
-            return text
+            return (text, modelUsed)
         }
     }
 
-    private func sendMultiImageAnalysisRequest(images: [UIImage], type: String) async throws -> String {
+    private func sendMultiImageAnalysisRequest(images: [UIImage], type: String) async throws -> (String, String?) {
         // Prepare all images on background threads
         let preparedImages: [(base64: String, mediaType: String)] = try await Task.detached {
             var results: [(base64: String, mediaType: String)] = []
@@ -186,6 +194,8 @@ final class ClaudeVisionService {
                 throw NutriLensError.unexpectedResponse
             }
 
+            let modelUsed = httpResponse.value(forHTTPHeaderField: "X-Model-Used")
+
             guard httpResponse.statusCode == 200 else {
                 let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
                 throw NutriLensError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
@@ -198,7 +208,7 @@ final class ClaudeVisionService {
                 throw NutriLensError.unexpectedResponse
             }
 
-            return text
+            return (text, modelUsed)
         }
     }
 

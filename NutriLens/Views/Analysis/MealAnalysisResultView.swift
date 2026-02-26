@@ -101,6 +101,15 @@ struct MealAnalysisResultView: View {
                         .foregroundStyle(viewModel.confidenceScore > 0.7 ? .green : viewModel.confidenceScore > 0.4 ? .orange : .red)
                     }
                 }
+
+                if let model = viewModel.modelUsed {
+                    HStack {
+                        Text("Model")
+                        Spacer()
+                        Text(model.contains("sonnet") ? "Sonnet" : model.contains("haiku") ? "Haiku" : model)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
 
             // Food items

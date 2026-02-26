@@ -2,7 +2,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MODEL_SONNET = "claude-sonnet-4-20250514";
 const DEFAULT_MODEL_HAIKU = "claude-haiku-4-5-20251001";
-const DAILY_SONNET_LIMIT = 15;
+const DAILY_SONNET_LIMIT = 50;
 const MAX_IMAGES_PER_REQUEST = 5;
 const MAX_BASE64_SIZE = 2_000_000; // ~2MB per image
 const MAX_REQUESTS_PER_IP_PER_MINUTE = 10;
@@ -18,16 +18,25 @@ function getModel(env, key) {
 const PROMPTS = {
   meal: {
     system:
-      "You are a nutrition analysis expert. Analyze food photos and estimate nutritional content for each visible food item. Be as accurate as possible with portion sizes based on visual cues. If you are uncertain about a food item, reflect that in a lower confidence score. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
-    user: `Analyze this meal photo. For each food item visible, estimate:
-- The food name
-- Approximate quantity/portion size
+      "You are a nutrition analysis expert with deep knowledge of food composition databases (USDA, NCCDB). Analyze food photos and estimate nutritional content for each visible food item. Use plates, bowls, utensils, hands, and common objects in the photo as size references to estimate portion sizes. A standard dinner plate is ~10 inches, a salad plate ~7 inches, a typical fork ~7 inches. Estimate portions in familiar units (cups, oz, tablespoons, pieces). When uncertain about preparation method or ingredients, assume the most common preparation. Lean toward realistic, moderate portions rather than overestimating. If you are uncertain about a food item, reflect that in a lower confidence score. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
+    user: `Analyze this meal photo. Use visual cues (plate size, utensils, hands, containers) to estimate portion sizes as accurately as possible.
+
+For each food item visible, estimate:
+- The specific food name (e.g. "grilled chicken breast" not just "chicken")
+- Approximate quantity in familiar units (e.g. "1 cup", "6 oz", "2 tablespoons", "1 medium")
 - Calories (kcal)
 - Protein (grams)
 - Carbohydrates (grams)
 - Fat (grams)
 - Fiber (grams)
 - Sugar (grams)
+
+Important guidelines:
+- Consider cooking method (grilled, fried, steamed, raw) as it affects calorie content significantly
+- Account for visible oils, sauces, dressings, and toppings — these add substantial calories
+- For mixed dishes, try to identify and separate key components
+- Use the USDA food database as your reference for nutrient values per portion
+- Be specific: "brown rice" vs "white rice", "whole milk" vs "skim milk"
 
 Also provide:
 - A suggested name for this meal
@@ -80,16 +89,24 @@ Respond ONLY with JSON in this exact format:
   },
   recipe: {
     system:
-      "You are a nutrition analysis expert specializing in recipe analysis. Analyze photos of recipes (from cookbooks, websites, handwritten notes, or screens) and estimate nutritional content for each ingredient. Be as accurate as possible with quantities. If you are uncertain, reflect that in a lower confidence score. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
-    user: `Analyze this recipe photo. For each ingredient or component, estimate:
-- The ingredient name
-- Approximate quantity used in the full recipe
-- Calories (kcal) for the full recipe amount
+      "You are a nutrition analysis expert specializing in recipe analysis with deep knowledge of food composition databases (USDA, NCCDB). Analyze photos of recipes (from cookbooks, websites, handwritten notes, or screens) and estimate nutritional content for each ingredient. Parse quantities carefully — distinguish between volume (cups, tbsp) and weight (oz, grams) measurements. Account for cooking transformations (e.g. dried pasta doubles in weight when cooked, meat loses ~25% weight when cooked). If you are uncertain, reflect that in a lower confidence score. Always respond with valid JSON matching the exact schema provided. Do not include any text outside the JSON.",
+    user: `Analyze this recipe photo. Read all ingredients and quantities carefully.
+
+For each ingredient or component, estimate:
+- The specific ingredient name
+- Exact quantity as written in the recipe
+- Calories (kcal) for the full recipe amount of that ingredient
 - Protein (grams)
 - Carbohydrates (grams)
 - Fat (grams)
 - Fiber (grams)
 - Sugar (grams)
+
+Important guidelines:
+- Include cooking fats/oils listed in the recipe — these are calorie-dense and often overlooked
+- For items like "salt to taste", use reasonable default amounts
+- Use USDA food database values as your reference
+- Nutrient values should be for the RAW ingredient amounts listed (the recipe total)
 
 Also provide:
 - A suggested name for this recipe

@@ -64,6 +64,7 @@ final class MealAnalysisViewModel {
     var capturedImage: UIImage?
     var savedMeal: Meal?
     var showFeedbackBanner: Bool = false
+    var modelUsed: String?
 
     private let visionService = ClaudeVisionService()
 
@@ -76,11 +77,12 @@ final class MealAnalysisViewModel {
         analysisState = .analyzing
 
         do {
-            let response = try await visionService.analyzeMealPhoto(image)
-            mealName = response.mealName
-            confidenceScore = response.confidence
-            foodItems = response.items.map { EditableFoodItem(from: $0) }
+            let result = try await visionService.analyzeMealPhoto(image)
+            mealName = result.response.mealName
+            confidenceScore = result.response.confidence
+            foodItems = result.response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
+            modelUsed = result.modelUsed
             analysisState = .success
         } catch {
             analysisState = .error(error.localizedDescription)
@@ -95,11 +97,12 @@ final class MealAnalysisViewModel {
         analysisState = .analyzing
 
         do {
-            let response = try await visionService.analyzeMealPhotos(images)
-            mealName = response.mealName
-            confidenceScore = response.confidence
-            foodItems = response.items.map { EditableFoodItem(from: $0) }
+            let result = try await visionService.analyzeMealPhotos(images)
+            mealName = result.response.mealName
+            confidenceScore = result.response.confidence
+            foodItems = result.response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
+            modelUsed = result.modelUsed
             analysisState = .success
         } catch {
             analysisState = .error(error.localizedDescription)
@@ -174,5 +177,6 @@ final class MealAnalysisViewModel {
         capturedImage = nil
         savedMeal = nil
         showFeedbackBanner = false
+        modelUsed = nil
     }
 }

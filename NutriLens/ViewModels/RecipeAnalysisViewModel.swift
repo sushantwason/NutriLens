@@ -13,6 +13,7 @@ final class RecipeAnalysisViewModel {
     var savedMeal: Meal?
     var showFeedbackBanner: Bool = false
     var estimatedServings: Int = 1
+    var modelUsed: String?
 
     private let visionService = ClaudeVisionService()
 
@@ -38,12 +39,13 @@ final class RecipeAnalysisViewModel {
         analysisState = .analyzing
 
         do {
-            let response = try await visionService.analyzeRecipe(image)
-            mealName = response.mealName
-            confidenceScore = response.confidence
-            estimatedServings = max(1, response.estimatedServings)
-            foodItems = response.items.map { EditableFoodItem(from: $0) }
+            let result = try await visionService.analyzeRecipe(image)
+            mealName = result.response.mealName
+            confidenceScore = result.response.confidence
+            estimatedServings = max(1, result.response.estimatedServings)
+            foodItems = result.response.items.map { EditableFoodItem(from: $0) }
             mealType = .suggestedForCurrentTime
+            modelUsed = result.modelUsed
             analysisState = .success
         } catch {
             analysisState = .error(error.localizedDescription)
@@ -128,5 +130,6 @@ final class RecipeAnalysisViewModel {
         savedMeal = nil
         showFeedbackBanner = false
         estimatedServings = 1
+        modelUsed = nil
     }
 }

@@ -1,18 +1,18 @@
 import UIKit
 
 enum ImageProcessor {
-    /// Max dimension for API — 1024px keeps base64 under ~1MB for most photos
-    static let maxDimension: CGFloat = 1024
+    /// Max dimension for API — 1536px gives Claude more detail for food identification
+    static let maxDimension: CGFloat = 1536
 
     /// Prepare an image for Claude Vision API: resize and compress to base64 JPEG
     static func prepareForAPI(_ image: UIImage) -> (base64: String, mediaType: String)? {
         let resized = resize(image, maxDimension: maxDimension)
 
-        // Start at 0.6 quality to keep size down; reduce further if needed
-        var quality: CGFloat = 0.6
+        // Start at 0.7 quality for better food detail; reduce if needed to stay under 2MB
+        var quality: CGFloat = 0.7
         var data = resized.jpegData(compressionQuality: quality)
 
-        while let d = data, d.count > 1_500_000, quality > 0.2 {
+        while let d = data, d.count > 1_800_000, quality > 0.3 {
             quality -= 0.1
             data = nil  // Release previous buffer before allocating new one
             data = resized.jpegData(compressionQuality: quality)
