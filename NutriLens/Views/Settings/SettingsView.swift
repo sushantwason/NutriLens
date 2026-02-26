@@ -32,7 +32,6 @@ struct SettingsView: View {
             dailyGoalsSection
             profileSection
             dietaryRestrictionsSection
-            weightLogSection
             privacySection
             mealRemindersSection
             widgetsSection
@@ -261,18 +260,6 @@ struct SettingsView: View {
         return restrictions.isEmpty ? "None" : restrictions.map(\.displayName).joined(separator: ", ")
     }
 
-    // MARK: - Weight Log
-
-    private var weightLogSection: some View {
-        Section("Health") {
-            NavigationLink {
-                WeightLogView()
-            } label: {
-                Label("Weight Log", systemImage: "scalemass.fill")
-            }
-        }
-    }
-
     // MARK: - Privacy & AI
 
     private var privacySection: some View {
@@ -477,7 +464,7 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
-        .modelContainer(for: [DailyGoal.self, UserProfile.self, WeightEntry.self], inMemory: true)
+        .modelContainer(for: [DailyGoal.self, UserProfile.self], inMemory: true)
         .environment(SubscriptionManager())
         .environment(TrialManager())
         .environment(MealReminderManager())
