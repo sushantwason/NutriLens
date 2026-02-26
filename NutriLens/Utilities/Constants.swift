@@ -4,6 +4,9 @@ enum AppConstants {
     /// Cloudflare Worker proxy URL — update after deploying with `npx wrangler deploy`
     static let apiBaseURL = "https://nutrilens-api.nutrilens.workers.dev"
 
+    /// App Store ID — used for review links and referral sharing
+    static let appStoreID = "6745208953"
+
     private static let appTokenKeychainKey = "api_app_token"
 
     /// App token for authenticating with the Worker proxy.

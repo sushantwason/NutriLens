@@ -60,6 +60,7 @@ struct DashboardView: View {
                     CoachInsightCard(
                         insight: coachService.latestInsight,
                         isLoading: coachService.isLoading,
+                        error: coachService.error,
                         onRefresh: { fetchCoachInsight() }
                     )
 

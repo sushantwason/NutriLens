@@ -10,7 +10,9 @@ struct SettingsView: View {
     @Environment(MealReminderManager.self) private var mealReminderManager
 
     @AppStorage("nutrilens.appearance.mode") private var appearanceMode: String = AppearanceMode.system.rawValue
+    @AppStorage("mealsight.ai.consent.accepted") private var aiConsentAccepted = false
     @State private var showPaywall = false
+    @State private var showRevokeAIAlert = false
     @State private var localGoal: DailyGoal?
     @State private var localProfile: UserProfile?
     @State private var didSetupDefaults = false
@@ -31,6 +33,7 @@ struct SettingsView: View {
             profileSection
             dietaryRestrictionsSection
             weightLogSection
+            privacySection
             mealRemindersSection
             widgetsSection
             achievementsSection
@@ -270,6 +273,43 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Privacy & AI
+
+    private var privacySection: some View {
+        Section("Privacy & AI") {
+            HStack {
+                Label("AI Photo Analysis", systemImage: "brain.filled.head.profile")
+                Spacer()
+                Text(aiConsentAccepted ? "Enabled" : "Disabled")
+                    .font(.caption)
+                    .foregroundStyle(aiConsentAccepted ? .nutriGreen : .secondary)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(aiConsentAccepted ? "Enabled" : "Disabled")
+
+            if aiConsentAccepted {
+                Button(role: .destructive) {
+                    showRevokeAIAlert = true
+                } label: {
+                    Label("Withdraw AI Consent", systemImage: "hand.raised.fill")
+                }
+                .alert("Withdraw AI Consent?", isPresented: $showRevokeAIAlert) {
+                    Button("Withdraw", role: .destructive) {
+                        aiConsentAccepted = false
+                        HapticService.notification(.success)
+                    }
+                    Button("Cancel", role: .cancel) { }
+                } message: {
+                    Text("You'll be asked for consent again the next time you scan a meal. Your existing meal data will not be affected.")
+                }
+            } else {
+                Text("AI analysis is disabled. You'll be asked to consent when you next scan a meal.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
     // MARK: - Meal Reminders
 
     private var mealRemindersSection: some View {
@@ -346,7 +386,7 @@ struct SettingsView: View {
     }
 
     private func shareReferralLink() {
-        let shareText = "Check out MealSight — it scans your meals and instantly tells you the calories, protein, carbs, and fat! https://apps.apple.com/app/id6745208953"
+        let shareText = "Check out MealSight — it scans your meals and instantly tells you the calories, protein, carbs, and fat! https://apps.apple.com/app/id\(AppConstants.appStoreID)"
         let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
@@ -379,7 +419,7 @@ struct SettingsView: View {
     }
 
     private func requestAppStoreReview() {
-        if let url = URL(string: "https://apps.apple.com/app/id6745208953?action=write-review") {
+        if let url = URL(string: "https://apps.apple.com/app/id\(AppConstants.appStoreID)?action=write-review") {
             UIApplication.shared.open(url)
         }
     }

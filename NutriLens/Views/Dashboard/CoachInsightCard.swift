@@ -3,6 +3,7 @@ import SwiftUI
 struct CoachInsightCard: View {
     let insight: CoachInsight?
     let isLoading: Bool
+    let error: String?
     let onRefresh: () -> Void
 
     var body: some View {
@@ -10,6 +11,8 @@ struct CoachInsightCard: View {
             loadingView
         } else if let insight {
             insightView(insight)
+        } else if error != nil {
+            errorView
         }
     }
 
@@ -63,6 +66,32 @@ struct CoachInsightCard: View {
             // Meal suggestion
             if let suggestion = insight.mealSuggestion {
                 mealSuggestionView(suggestion)
+            }
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - Error
+
+    private var errorView: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.nutriOrange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Coach unavailable")
+                    .font(.subheadline.weight(.medium))
+                Text("Tap to retry")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button {
+                onRefresh()
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.nutriGreen)
             }
         }
         .padding()
