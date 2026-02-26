@@ -9,7 +9,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    TARGETED_DEVICE_FAMILY: "1,2"
+    TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: MV279BP25N
     INFOPLIST_KEY_NSCameraUsageDescription: "MealSight uses your camera to photograph meals and nutrition labels. Photos are sent to an AI service for nutritional analysis."
@@ -37,7 +37,7 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: true
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "17"
+        CURRENT_PROJECT_VERSION: "19"
     scheme:
       storeKitConfiguration: NutriLens/Resources/Subscription/NutriLensProducts.storekit
     dependencies:
@@ -75,5 +75,5 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.nutrilensapp.app.widget
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "17"
+        CURRENT_PROJECT_VERSION: "19"
         GENERATE_INFOPLIST_FILE: true
