@@ -143,7 +143,7 @@ struct ProfileEditorView: View {
             }
 
             // MARK: - BMI
-            Section("Body Mass Index") {
+            Section {
                 HStack {
                     Text("BMI")
                         .font(.subheadline)
@@ -157,11 +157,28 @@ struct ProfileEditorView: View {
                         .padding(.vertical, 3)
                         .background(bmiColor, in: Capsule())
                 }
+
+                Link(destination: URL(string: "https://www.who.int/europe/news-room/fact-sheets/item/a-healthy-lifestyle---who-recommendations")!) {
+                    HStack {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                        Text("BMI categories based on WHO classification")
+                            .font(.caption)
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Body Mass Index")
+            } footer: {
+                Text("BMI = weight (kg) / height (m)\u{00B2}. Classifications: Underweight < 18.5, Normal 18.5\u{2013}24.9, Overweight 25\u{2013}29.9, Obese \u{2265} 30. Source: World Health Organization.")
             }
 
             // MARK: - Recommended Goals
             if let rec = recommendation {
-                Section("Recommended Goals") {
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         recommendedRow("Calories", value: rec.calories, unit: "kcal", color: .calorieColor)
                         recommendedRow("Protein", value: rec.proteinGrams, unit: "g", color: .proteinColor)
@@ -178,6 +195,10 @@ struct ProfileEditorView: View {
                             Label("Apply to Daily Goals", systemImage: "arrow.triangle.2.circlepath")
                         }
                     }
+                } header: {
+                    Text("Recommended Goals")
+                } footer: {
+                    Text("Calorie estimates use the Mifflin-St Jeor equation. Macro ranges follow USDA Dietary Guidelines for Americans 2020\u{2013}2025. These are general estimates\u{2014}consult a healthcare professional for personalized advice.")
                 }
             }
         }
