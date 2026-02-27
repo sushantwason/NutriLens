@@ -8,11 +8,12 @@ enum ImageProcessor {
     static func prepareForAPI(_ image: UIImage) -> (base64: String, mediaType: String)? {
         let resized = resize(image, maxDimension: maxDimension)
 
-        // Start at 0.7 quality for better food detail; reduce if needed to stay under 2MB
+        // Start at 0.7 quality for better food detail; reduce if needed
+        // Target 1.4MB binary so base64 (~1.87MB) stays well under backend limit
         var quality: CGFloat = 0.7
         var data = resized.jpegData(compressionQuality: quality)
 
-        while let d = data, d.count > 1_800_000, quality > 0.3 {
+        while let d = data, d.count > 1_400_000, quality > 0.2 {
             quality -= 0.1
             data = nil  // Release previous buffer before allocating new one
             data = resized.jpegData(compressionQuality: quality)
