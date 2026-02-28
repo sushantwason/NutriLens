@@ -38,14 +38,14 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
-          "displayPrice" : "39.99",
+          "displayPrice" : "29.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "mealsight_pro_annual_001",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Unlimited AI food scans and full access — save 33%",
+              "description" : "Unlimited AI food scans and full access — save 50%",
               "displayName" : "MealSight Pro Annual",
               "locale" : "en_US"
             }

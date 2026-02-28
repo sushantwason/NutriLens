@@ -90,12 +90,23 @@ struct PaywallView: View {
 
     // MARK: - Billing Toggle
 
+    private var savingsBadge: String? {
+        guard let monthly = subscriptionManager.monthlyProduct,
+              let annual = subscriptionManager.annualProduct else { return nil }
+        let yearlyAtMonthly = monthly.price * 12
+        guard yearlyAtMonthly > 0 else { return nil }
+        let saved = NSDecimalNumber(decimal: 1 - annual.price / yearlyAtMonthly)
+        let percent = Int((saved.doubleValue * 100).rounded())
+        guard percent > 0 else { return nil }
+        return "Save \(percent)%"
+    }
+
     private var billingToggle: some View {
         HStack(spacing: 0) {
             billingOption(label: "Monthly", selected: !isAnnual) {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = false }
             }
-            billingOption(label: "Annual", selected: isAnnual, badge: "Save 33%") {
+            billingOption(label: "Annual", selected: isAnnual, badge: savingsBadge) {
                 withAnimation(.easeInOut(duration: 0.2)) { isAnnual = true }
             }
         }

@@ -3,7 +3,7 @@ import SwiftUI
 
 enum SubscriptionTier: String {
     case none
-    case pro   // $4.99/mo or $39.99/yr, unlimited scans
+    case pro   // $4.99/mo or $29.99/yr, unlimited scans
 }
 
 @MainActor @Observable

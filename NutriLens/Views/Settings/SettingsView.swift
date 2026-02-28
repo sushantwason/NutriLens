@@ -101,12 +101,20 @@ struct SettingsView: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
+            }
 
+            if !OwnerBypass.isOwnerDevice {
                 Button {
                     Task { await subscriptionManager.loadProducts() }
                     showPaywall = true
                 } label: {
-                    Label("Upgrade to Pro", systemImage: "sparkles")
+                    if subscriptionManager.isProUser {
+                        Label("View Plans", systemImage: "sparkles")
+                    } else if trialManager.isTrialActive {
+                        Label("View Plans", systemImage: "sparkles")
+                    } else {
+                        Label("Upgrade to Pro", systemImage: "sparkles")
+                    }
                 }
             }
 
