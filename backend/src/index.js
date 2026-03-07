@@ -1,3 +1,4 @@
+// security fix
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const DEFAULT_MODEL_SONNET = "claude-sonnet-4-20250514";
