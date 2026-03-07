@@ -10,11 +10,12 @@ const ANTHROPIC_TIMEOUT_MS = 45_000;
 const MAX_FEEDBACK_MESSAGE_LENGTH = 5000;
 const VALID_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
-// ===== SECURITY FIX: Replace wildcard CORS with origin allowlist =====
+// ===== CORS origin allowlist =====
+// This API is called by the native iOS app (which doesn't send Origin headers),
+// so CORS only matters if a web browser tries to call this API.
+// Keeping a restrictive allowlist blocks unauthorized web-based access.
 const ALLOWED_ORIGINS = new Set([
-    // Add your actual app origins here
-    "https://mealsight.app",
-    "https://www.mealsight.app",
+    "https://nutrilens-api.nutrilens.workers.dev",
     // During development, uncomment as needed:
     // "http://localhost:3000",
 ]);
