@@ -8,7 +8,7 @@ const MAX_BASE64_SIZE = 4_000_000; // ~4MB base64 per image (≈3MB binary)
 const MAX_REQUESTS_PER_IP_PER_MINUTE = 10;
 const ANTHROPIC_TIMEOUT_MS = 45_000;
 const MAX_FEEDBACK_MESSAGE_LENGTH = 5000;
-const VALID_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const VALID_MEDIA_TYPES = new Set(["imag e/jpeg", "image/png", "image/gif", "image/webp"]);
 
 function getModel(env, key) {
   if (key === "sonnet") return env.MODEL_SONNET || DEFAULT_MODEL_SONNET;
