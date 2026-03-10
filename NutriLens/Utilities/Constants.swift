@@ -17,7 +17,7 @@ enum AppConstants {
 
     /// Seeds the API token into Keychain on first launch.
     /// Checks for a `NUTRILENS_APP_TOKEN` environment variable first,
-    /// then falls back to a bundled default.
+    /// then falls back to the value in Secrets.swift (gitignored).
     static func seedAppTokenIfNeeded() {
         guard KeychainService.load(key: appTokenKeychainKey) == nil else { return }
 
@@ -26,14 +26,7 @@ enum AppConstants {
            !envToken.isEmpty {
             token = envToken
         } else {
-            // Base64-encoded fallback to avoid plain-text secret in source
-            let encoded = "bnV0cmlsZW5zLTIwMjYtc2VjcmV0LXh5eg=="
-            if let data = Data(base64Encoded: encoded),
-               let decoded = String(data: data, encoding: .utf8) {
-                token = decoded
-            } else {
-                token = ""
-            }
+            token = AppSecrets.appToken
         }
 
         try? KeychainService.save(key: appTokenKeychainKey, value: token)
