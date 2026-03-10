@@ -25,6 +25,9 @@ Package.resolved
 *.swp
 *~
 
+# Secrets (copy Secrets.swift.example → Secrets.swift and fill in values)
+NutriLens/Utilities/Secrets.swift
+
 # Backend
 backend/node_modules/
 backend/.env
