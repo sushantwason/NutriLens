@@ -670,9 +670,9 @@ function privacyPage() {
       <li><strong>USDA FoodData Central:</strong> Receives text search queries for food nutrition lookup. No personal data is included in these requests.</li>
       <li><strong>OpenFoodFacts:</strong> Receives barcode numbers for product nutrition lookup. No personal data is included.</li>
       <li><strong>Apple (StoreKit):</strong> Processes in-app subscription purchases per Apple's policies.</li>
+      <li><strong>TelemetryDeck:</strong> Receives anonymous, aggregated usage signals (e.g., which features are used and how often) to help us improve the app. TelemetryDeck does not collect personal data, device identifiers, or IP addresses. No user-identifiable information is ever transmitted. See <a href="https://telemetrydeck.com/privacy/">TelemetryDeck's Privacy Policy</a>.</li>
     </ul>
     <p>We do not sell, rent, or share your personal data with third parties for advertising or marketing purposes. Health and fitness data is never used for advertising, marketing, or use-based data mining, in compliance with Apple's App Store guidelines.</p>
-    <p>We do not use any third-party analytics, crash reporting, or tracking SDKs. No usage data is sent to external analytics services.</p>
 
     <h2>4. Data Storage and Security</h2>
     <ul>
