@@ -8,6 +8,9 @@ struct WidgetUpsellCard: View {
         if !isDismissed {
             cardContent
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .onAppear {
+                    AnalyticsService.track(.widgetUpsellShown)
+                }
         }
     }
 
@@ -31,6 +34,7 @@ struct WidgetUpsellCard: View {
                 Spacer()
 
                 Button {
+                    AnalyticsService.track(.widgetUpsellDismissed)
                     withAnimation(.easeOut(duration: 0.25)) {
                         isDismissed = true
                     }

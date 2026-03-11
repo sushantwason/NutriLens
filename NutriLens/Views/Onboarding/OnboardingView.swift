@@ -28,6 +28,7 @@ struct OnboardingView: View {
     var body: some View {
         TabView(selection: $currentPage) {
             OnboardingWelcomeStep {
+                AnalyticsService.track(.onboardingStepCompleted, parameters: ["step": "welcome"])
                 withAnimation { currentPage = 1 }
             }
             .tag(0)
@@ -39,11 +40,13 @@ struct OnboardingView: View {
                 biologicalSex: $biologicalSex,
                 activityLevel: $activityLevel,
                 onNext: {
+                    AnalyticsService.track(.onboardingStepCompleted, parameters: ["step": "profile"])
                     applyProfileRecommendation()
                     profileCompleted = true
                     withAnimation { currentPage = 2 }
                 },
                 onSkip: {
+                    AnalyticsService.track(.onboardingStepSkipped, parameters: ["step": "profile"])
                     withAnimation { currentPage = 2 }
                 }
             )
@@ -52,9 +55,11 @@ struct OnboardingView: View {
             OnboardingDietaryStep(
                 dietaryRestrictions: $dietaryRestrictions,
                 onNext: {
+                    AnalyticsService.track(.onboardingStepCompleted, parameters: ["step": "dietary"])
                     withAnimation { currentPage = 3 }
                 },
                 onSkip: {
+                    AnalyticsService.track(.onboardingStepSkipped, parameters: ["step": "dietary"])
                     withAnimation { currentPage = 3 }
                 }
             )
@@ -67,11 +72,13 @@ struct OnboardingView: View {
                 fatTarget: $fatTarget,
                 sugarTarget: $sugarTarget
             ) {
+                AnalyticsService.track(.onboardingStepCompleted, parameters: ["step": "goal"])
                 withAnimation { currentPage = 4 }
             }
             .tag(3)
 
             OnboardingReadyStep {
+                AnalyticsService.track(.onboardingCompleted)
                 saveGoals()
                 onComplete()
             }
@@ -80,6 +87,15 @@ struct OnboardingView: View {
         .tabViewStyle(.page(indexDisplayMode: .always))
         .indexViewStyle(.page(backgroundDisplayMode: .always))
         .interactiveDismissDisabled()
+        .onAppear {
+            AnalyticsService.track(.onboardingStepViewed, parameters: ["step": "welcome"])
+        }
+        .onChange(of: currentPage) { _, newPage in
+            let stepNames = ["welcome", "profile", "dietary", "goal", "ready"]
+            if newPage < stepNames.count {
+                AnalyticsService.track(.onboardingStepViewed, parameters: ["step": stepNames[newPage]])
+            }
+        }
     }
 
     private func applyProfileRecommendation() {

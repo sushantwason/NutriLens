@@ -26,8 +26,10 @@ final class LabelScanViewModel {
             servingsPerContainer = response.servingsPerContainer ?? 1
             nutrients = response.nutrients.toNutrientInfo()
             analysisState = .success
+            AnalyticsService.track(.scanSuccess, parameters: ["mode": "label"])
         } catch {
             analysisState = .error(error.localizedDescription)
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "label"])
         }
     }
 
@@ -79,6 +81,7 @@ final class LabelScanViewModel {
 
         // Release full-resolution image
         capturedImage = nil
+        AnalyticsService.track(.mealSaved, parameters: ["source": "nutritionLabel"])
         WidgetCenter.shared.reloadAllTimelines()
     }
 

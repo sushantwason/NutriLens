@@ -29,6 +29,9 @@ struct SmartInsightsView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Insights")
         .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            AnalyticsService.track(.smartInsightsOpened)
+        }
         .task {
             await loadData()
         }

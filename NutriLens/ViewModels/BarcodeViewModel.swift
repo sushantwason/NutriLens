@@ -36,10 +36,13 @@ final class BarcodeViewModel {
             nutrients = result.nutrients
             imageURL = result.imageURL
             state = .found
+            AnalyticsService.track(.scanSuccess, parameters: ["mode": "barcode"])
         } catch OpenFoodFactsError.productNotFound {
             state = .notFound
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "barcode", "reason": "notFound"])
         } catch {
             state = .error(error.localizedDescription)
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "barcode", "reason": "error"])
         }
     }
 
@@ -71,6 +74,7 @@ final class BarcodeViewModel {
             return
         }
 
+        AnalyticsService.track(.mealSaved, parameters: ["source": "barcode"])
         WidgetCenter.shared.reloadAllTimelines()
 
     }

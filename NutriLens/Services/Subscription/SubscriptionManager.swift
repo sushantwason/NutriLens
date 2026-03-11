@@ -96,6 +96,7 @@ final class SubscriptionManager {
                 let transaction = try checkVerified(verification)
                 await transaction.finish()
                 await updateSubscriptionStatus()
+                AnalyticsService.track(.purchaseCompleted, parameters: ["productID": product.id])
             case .userCancelled:
                 break
             case .pending:
@@ -105,6 +106,7 @@ final class SubscriptionManager {
             }
         } catch {
             purchaseError = "Purchase failed: \(error.localizedDescription)"
+            AnalyticsService.track(.purchaseFailed)
         }
         isLoading = false
     }
@@ -115,6 +117,7 @@ final class SubscriptionManager {
         isLoading = true
         try? await AppStore.sync()
         await updateSubscriptionStatus()
+        AnalyticsService.track(.purchaseRestored)
         isLoading = false
     }
 

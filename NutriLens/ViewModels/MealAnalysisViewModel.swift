@@ -84,8 +84,10 @@ final class MealAnalysisViewModel {
             mealType = .suggestedForCurrentTime
             modelUsed = result.modelUsed
             analysisState = .success
+            AnalyticsService.track(.scanSuccess, parameters: ["mode": "meal", "itemCount": "\(foodItems.count)"])
         } catch {
             analysisState = .error(error.localizedDescription)
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "meal"])
             HapticService.errorOccurred()
         }
     }
@@ -104,8 +106,10 @@ final class MealAnalysisViewModel {
             mealType = .suggestedForCurrentTime
             modelUsed = result.modelUsed
             analysisState = .success
+            AnalyticsService.track(.scanSuccess, parameters: ["mode": "meal", "itemCount": "\(foodItems.count)"])
         } catch {
             analysisState = .error(error.localizedDescription)
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "meal"])
             HapticService.errorOccurred()
         }
     }
@@ -154,6 +158,7 @@ final class MealAnalysisViewModel {
         // Release full-resolution image after storage compression
         capturedImage = nil
         HapticService.mealSaved()
+        AnalyticsService.track(.mealSaved, parameters: ["source": "photoAnalysis", "itemCount": "\(foodItems.count)"])
         WidgetCenter.shared.reloadAllTimelines()
 
     }

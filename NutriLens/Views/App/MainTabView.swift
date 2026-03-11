@@ -26,8 +26,12 @@ struct MainTabView: View {
                 .tag(2)
         }
         .tint(.nutriGreen)
-        .onChange(of: selectedTab) { _, _ in
+        .onChange(of: selectedTab) { _, newTab in
             HapticService.tabChanged()
+            let tabNames = ["dashboard", "history", "tracking"]
+            if newTab < tabNames.count {
+                AnalyticsService.track(.tabChanged, parameters: ["tab": tabNames[newTab]])
+            }
         }
     }
 }
