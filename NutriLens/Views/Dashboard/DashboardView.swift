@@ -344,6 +344,7 @@ struct DashboardView: View {
             // Search Food (secondary)
             Button {
                 HapticService.buttonTap()
+                AnalyticsService.track(.foodSearchOpened)
                 showFoodSearch = true
             } label: {
                 VStack(spacing: 8) {
@@ -511,6 +512,7 @@ struct DashboardView: View {
     private func deleteMeal(_ meal: Meal) {
         withAnimation {
             HapticService.mealDeleted()
+            AnalyticsService.track(.mealDeleted)
             modelContext.delete(meal)
             do {
                 try modelContext.save()
@@ -531,6 +533,7 @@ struct DashboardView: View {
                 print("Failed to duplicate meal: \(error.localizedDescription)")
             }
             HapticService.mealSaved()
+            AnalyticsService.track(.mealDuplicated)
             WidgetCenter.shared.reloadAllTimelines()
         }
     }
@@ -681,6 +684,7 @@ struct MealRowCard: View {
 
             Button {
                 HapticService.buttonTap()
+                AnalyticsService.track(.mealFavorited, parameters: ["isFavorite": "\(!meal.isFavorite)"])
                 meal.isFavorite.toggle()
                 do {
                     try modelContext.save()

@@ -78,6 +78,9 @@ struct AchievementsView: View {
         .navigationTitle("Achievements")
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(.systemGroupedBackground))
+        .onAppear {
+            AnalyticsService.track(.achievementsViewed)
+        }
         .task {
             await loadData()
         }

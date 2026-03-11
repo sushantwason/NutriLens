@@ -196,6 +196,7 @@ struct FeedbackView: View {
 
             if httpResponse.statusCode == 200 {
                 HapticService.notification(.success)
+                AnalyticsService.track(.feedbackSent, parameters: ["category": selectedCategory.rawValue])
                 withAnimation { submitted = true }
             } else {
                 let body = try? JSONSerialization.jsonObject(with: data) as? [String: Any]

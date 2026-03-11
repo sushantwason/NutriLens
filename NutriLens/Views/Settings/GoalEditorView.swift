@@ -93,6 +93,9 @@ struct GoalEditorView: View {
         }
         .navigationTitle("Edit Goals")
         .navigationBarTitleDisplayMode(.inline)
+        .onDisappear {
+            AnalyticsService.track(.goalsEdited)
+        }
         .task {
             guard !didLoad else { return }
             didLoad = true

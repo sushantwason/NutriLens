@@ -15,6 +15,7 @@ struct NutriLensApp: App {
     init() {
         OwnerBypass.printDeviceUUID()
         AppConstants.seedAppTokenIfNeeded()
+        AnalyticsService.configure()
         // Reuse the shared container so the app and widget read/write the same store
         modelContainer = SharedModelContainer.sharedModelContainer
     }
@@ -27,8 +28,14 @@ struct NutriLensApp: App {
                 .environment(scanCounter)
                 .environment(mealReminderManager)
                 .onChange(of: scenePhase) { _, newPhase in
-                    if newPhase == .background {
+                    switch newPhase {
+                    case .active:
+                        AnalyticsService.track(.appOpened)
+                    case .background:
                         WidgetCenter.shared.reloadAllTimelines()
+                        AnalyticsService.track(.appBackgrounded)
+                    default:
+                        break
                     }
                 }
                 .task {

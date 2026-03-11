@@ -225,6 +225,8 @@ struct TextFoodSearchView: View {
         modelContext.insert(meal)
 
         HapticService.mealSaved()
+        AnalyticsService.track(.foodSearchCompleted)
+        AnalyticsService.track(.mealSaved, parameters: ["source": "textSearch"])
         WidgetCenter.shared.reloadAllTimelines()
 
         showConfirmation = true

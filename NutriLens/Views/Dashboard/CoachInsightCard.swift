@@ -70,6 +70,9 @@ struct CoachInsightCard: View {
         }
         .padding()
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .onAppear {
+            AnalyticsService.track(.coachInsightViewed)
+        }
     }
 
     // MARK: - Error

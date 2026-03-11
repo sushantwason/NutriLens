@@ -292,6 +292,7 @@ struct SettingsView: View {
                     Button("Withdraw", role: .destructive) {
                         aiConsentAccepted = false
                         HapticService.notification(.success)
+                        AnalyticsService.track(.goalsEdited)
                     }
                     Button("Cancel", role: .cancel) { }
                 } message: {
@@ -381,6 +382,7 @@ struct SettingsView: View {
     }
 
     private func shareReferralLink() {
+        AnalyticsService.track(.referralShared)
         let shareText = "Check out MealSight — it scans your meals and instantly tells you the calories, protein, carbs, and fat! https://apps.apple.com/app/id\(AppConstants.appStoreID)"
         let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
@@ -414,6 +416,7 @@ struct SettingsView: View {
     }
 
     private func requestAppStoreReview() {
+        AnalyticsService.track(.appStoreReviewPrompted)
         if let url = URL(string: "https://apps.apple.com/app/id\(AppConstants.appStoreID)?action=write-review") {
             UIApplication.shared.open(url)
         }

@@ -47,8 +47,10 @@ final class RecipeAnalysisViewModel {
             mealType = .suggestedForCurrentTime
             modelUsed = result.modelUsed
             analysisState = .success
+            AnalyticsService.track(.scanSuccess, parameters: ["mode": "recipe", "servings": "\(estimatedServings)"])
         } catch {
             analysisState = .error(error.localizedDescription)
+            AnalyticsService.track(.scanFailed, parameters: ["mode": "recipe"])
         }
     }
 
@@ -106,6 +108,7 @@ final class RecipeAnalysisViewModel {
         // Release full-resolution image after storage compression
         capturedImage = nil
         HapticService.mealSaved()
+        AnalyticsService.track(.mealSaved, parameters: ["source": "recipe", "servings": "\(estimatedServings)"])
         WidgetCenter.shared.reloadAllTimelines()
 
     }

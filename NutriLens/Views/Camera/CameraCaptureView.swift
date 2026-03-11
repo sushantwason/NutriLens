@@ -392,6 +392,8 @@ struct CameraCaptureView: View {
     // MARK: - Scan Gating
 
     private func attemptScan(with image: UIImage) async {
+        AnalyticsService.track(.scanInitiated, parameters: ["mode": scanMode.rawValue])
+
         // Trial users: free access
         if trialManager.isTrialActive {
             await analyzeImage(image)
@@ -409,6 +411,7 @@ struct CameraCaptureView: View {
             scanCounter.recordScan()
             await analyzeImage(image)
         case .none:
+            AnalyticsService.track(.scanGatedByPaywall, parameters: ["mode": scanMode.rawValue])
             if subscriptionManager.products.isEmpty {
                 await subscriptionManager.loadProducts()
             }
@@ -445,6 +448,7 @@ struct CameraCaptureView: View {
 
     /// Scan-gating for multi-image meal analysis (mirrors attemptScan but for [UIImage])
     private func attemptMealScan(with images: [UIImage]) async {
+        AnalyticsService.track(.scanInitiated, parameters: ["mode": "Meal Photo", "photoCount": "\(images.count)"])
         if trialManager.isTrialActive {
             await analyzeMealImages(images)
             return
@@ -460,6 +464,7 @@ struct CameraCaptureView: View {
             scanCounter.recordScan()
             await analyzeMealImages(images)
         case .none:
+            AnalyticsService.track(.scanGatedByPaywall, parameters: ["mode": "Meal Photo"])
             if subscriptionManager.products.isEmpty {
                 await subscriptionManager.loadProducts()
             }
@@ -488,6 +493,7 @@ struct CameraCaptureView: View {
         case .pro:
             performBarcodeScan(shouldRecordScan: true)
         case .none:
+            AnalyticsService.track(.scanGatedByPaywall, parameters: ["mode": "Barcode"])
             Task {
                 if subscriptionManager.products.isEmpty {
                     await subscriptionManager.loadProducts()

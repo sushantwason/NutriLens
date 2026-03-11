@@ -32,6 +32,9 @@ struct PaywallView: View {
                     Button("Close") { dismiss() }
                 }
             }
+            .onAppear {
+                AnalyticsService.track(.paywallShown)
+            }
             .task {
                 if subscriptionManager.products.isEmpty {
                     await subscriptionManager.loadProducts()
@@ -198,6 +201,7 @@ struct PaywallView: View {
         return Button {
             Task {
                 if let product = selectedProduct {
+                    AnalyticsService.track(.purchaseInitiated, parameters: ["plan": isAnnual ? "annual" : "monthly"])
                     await subscriptionManager.purchase(product: product)
                 }
             }
